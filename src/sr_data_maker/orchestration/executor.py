@@ -32,7 +32,7 @@ class PipelineExecutor:
                     continue
 
                 try:
-                    runner = self._build_runner(task)
+                    runner = self._build_runner(task, config["runtime"])
                     generator = self._build_generator(task, runner)
                     samples = generator.generate(source, context=None)
                     for sample in samples:
@@ -48,12 +48,14 @@ class PipelineExecutor:
         return summary
 
     @staticmethod
-    def _build_runner(task: dict[str, Any]):
+    def _build_runner(task: dict[str, Any], runtime: dict[str, Any]):
         runner_config = dict(task["runner"])
         runner_type = runner_config.pop("type")
         params = {}
         params.update(task.get("degradation", {}))
         params.update(task.get("model", {}))
+        if runner_type == "RealESRGANRunner" and "device" not in params and runtime.get("device"):
+            params["device"] = runtime["device"]
         return RUNNERS.build({"type": runner_type, **params})
 
     @staticmethod

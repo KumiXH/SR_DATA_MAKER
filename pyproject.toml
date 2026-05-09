@@ -8,6 +8,7 @@ version = "0.1.0"
 description = "YAML-driven super-resolution training data generation toolkit."
 requires-python = ">=3.10"
 dependencies = [
+  "numpy>=1.24",
   "Pillow>=10",
   "PyYAML>=6",
 ]
@@ -15,6 +16,10 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "pytest>=8",
+]
+realesrgan = [
+  "basicsr>=1.4.2",
+  "realesrgan>=0.3.0",
 ]
 
 [project.scripts]
