@@ -19,6 +19,7 @@ tasks:
     model:
       name: HAT_SRx2
       weights: ./weights/HAT_SRx2.pth
+      download_url: https://huggingface.co/jaideepsingh/upscale_models/resolve/main/HAT/HAT_SRx2.pth?download=true
       repo_root: ./third_party/HAT
       basicsr_root: ./third_party/BasicSR
       scale: 2

@@ -7,6 +7,7 @@ from pathlib import Path
 from sr_data_maker.config.loader import load_config
 from sr_data_maker.config.validator import validate_config
 from sr_data_maker.orchestration.executor import PipelineExecutor
+from sr_data_maker.setup.pytorch_teacher import print_teacher_setup_summary, setup_hat_from_config, setup_swinir_from_config
 from sr_data_maker.setup.realesrgan import print_setup_summary, setup_realesrgan_from_config
 
 
@@ -24,6 +25,12 @@ def main() -> int:
     realesrgan = setup_sub.add_parser("realesrgan")
     realesrgan.add_argument("--config", required=True)
     realesrgan.add_argument("--project-root", default=".")
+    swinir = setup_sub.add_parser("swinir")
+    swinir.add_argument("--config", required=True)
+    swinir.add_argument("--project-root", default=".")
+    hat = setup_sub.add_parser("hat")
+    hat.add_argument("--config", required=True)
+    hat.add_argument("--project-root", default=".")
 
     args = parser.parse_args()
     if args.command == "run":
@@ -32,6 +39,10 @@ def main() -> int:
         return _validate(args.config)
     if args.command == "setup" and args.setup_target == "realesrgan":
         return _setup_realesrgan(args.config, args.project_root)
+    if args.command == "setup" and args.setup_target == "swinir":
+        return _setup_swinir(args.config, args.project_root)
+    if args.command == "setup" and args.setup_target == "hat":
+        return _setup_hat(args.config, args.project_root)
     return _inspect(args.dataset)
 
 
@@ -58,6 +69,20 @@ def _setup_realesrgan(config_path: str, project_root: str) -> int:
     config = load_config(config_path)
     results = setup_realesrgan_from_config(config, project_root=project_root)
     print_setup_summary(results)
+    return 0
+
+
+def _setup_swinir(config_path: str, project_root: str) -> int:
+    config = load_config(config_path)
+    results = setup_swinir_from_config(config, project_root=project_root)
+    print_teacher_setup_summary("swinir", results)
+    return 0
+
+
+def _setup_hat(config_path: str, project_root: str) -> int:
+    config = load_config(config_path)
+    results = setup_hat_from_config(config, project_root=project_root)
+    print_teacher_setup_summary("hat", results)
     return 0
 
 

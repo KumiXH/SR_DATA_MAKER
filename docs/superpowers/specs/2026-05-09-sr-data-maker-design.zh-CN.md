@@ -594,7 +594,7 @@ MVP 支持的运行模式：
 - `PipelineExecutor`
 - 支持简单 `base` 继承的 YAML 配置加载器
 - 基于 registry 的组件构建
-- CLI 命令：`run`、`validate`、`inspect`、`setup realesrgan`
+- CLI 命令：`run`、`validate`、`inspect`、`setup realesrgan`、`setup swinir`、`setup hat`
 - `samples.jsonl`、`failures.jsonl`、`run_summary.json`
 - 退化图和教师图的镜像输出目录
 - 为未来修复模型预留 `restored/<model_name>/<source_rel_path>` 输出布局
@@ -612,7 +612,7 @@ MVP 支持的运行模式：
 - 大量外部模型 adapter
 - 学习型退化网络
 - 除预留接口和配置形态以外的完整图像修复模型实现
-- 生成过程中隐式下载模型。Real-ESRGAN 本地仓库和权重通过 `setup realesrgan` 显式准备。
+- 生成过程中隐式下载模型。Real-ESRGAN、SwinIR 和 HAT 的本地仓库与权重通过 setup 命令显式准备。
 - 复杂报表看板
 - 完整 SQLite 状态存储
 
