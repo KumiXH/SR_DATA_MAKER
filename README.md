@@ -5,7 +5,7 @@ YAML-driven training data generation toolkit for super-resolution datasets.
 The MVP supports:
 
 - Classical degradation output under `degraded/<task_name>/<source_rel_path>`.
-- Real-ESRGAN x2 teacher output under `teacher/<model_name>/<source_rel_path>`.
+- Real-ESRGAN, SwinIR, and HAT teacher output under `teacher/<model_name>/<source_rel_path>`.
 - Nested source image folders with mirrored output paths.
 - JSONL manifests for provenance.
 - Windows and Linux execution with non-interactive commands.
@@ -56,6 +56,40 @@ Supported default model downloads:
 
 - `RealESRGAN_x2plus`
 - `RealESRGAN_x4plus`
+
+## SwinIR And HAT Adapters
+
+SwinIR and HAT use the same teacher task shape as Real-ESRGAN:
+
+```yaml
+runner:
+  type: SwinIRAdapter
+model:
+  name: SwinIR_x2_classical
+  weights: ./weights/SwinIR_x2_classical.pth
+  repo_root: ./third_party/SwinIR
+  scale: 2
+  tile: 512
+  tile_pad: 16
+  half: false
+```
+
+```yaml
+runner:
+  type: HATAdapter
+model:
+  name: HAT_SRx2
+  weights: ./weights/HAT_SRx2.pth
+  repo_root: ./third_party/HAT
+  basicsr_root: ./third_party/BasicSR
+  scale: 2
+  tile: 512
+  tile_pad: 16
+  half: false
+```
+
+Example configs are available at `configs/examples/local_swinir_x2.yaml` and `configs/examples/local_hat_x2.yaml`.
+These adapters expect the official repositories and weights to be prepared locally. Automatic setup commands for SwinIR and HAT can be added later once the target weight sources are fixed.
 
 ## Output Layout
 

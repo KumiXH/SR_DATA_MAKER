@@ -581,7 +581,7 @@ The first implementation includes:
 - `TeacherSRGenerator`
 - `RestorationGenerator` interface reservation for future image-to-image restoration tasks
 - `ClassicalDegradationRunner`
-- `PyTorchTeacherRunner`
+- `PyTorchTeacherRunner`-style teacher adapters for Real-ESRGAN, SwinIR, and HAT
 - `DatasetWriter`
 - `PipelineExecutor`
 - YAML config loader with simple `base` inheritance
@@ -688,7 +688,7 @@ Recommended implementation order:
 - Teacher folder names default to `model.name`; task config may override them with `output.folder_name`.
 - Restoration folder names default to `model.name`; task config may override them with `output.folder_name`.
 - Degradation folder names default to `task.name`; task config may override them with `output.folder_name`.
-- The first real super-resolution teacher adapter should target Real-ESRGAN 2x, using `RealESRGAN_x2plus` as the default model name and `scale: 2`.
+- The first real super-resolution teacher adapters target Real-ESRGAN 2x, SwinIR x2, and HAT x2. All use YAML fields such as `model.name`, `weights`, `scale`, `tile`, `tile_pad`, and `half`.
 - Degradation uses conventional operators in the MVP: resize, blur, noise, and JPEG compression.
 - Degradation and teacher tasks can be independently enabled or disabled from YAML.
 - The initial state store should use JSONL files. SQLite remains a planned replacement once dataset scale makes lookup speed a real bottleneck.

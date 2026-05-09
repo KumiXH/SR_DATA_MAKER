@@ -4,7 +4,9 @@ from sr_data_maker.core.registry import Registry
 from sr_data_maker.generators.degradation import DegradationGenerator
 from sr_data_maker.generators.teacher_sr import TeacherSRGenerator
 from sr_data_maker.runners.degradation.classical import ClassicalDegradationRunner
+from sr_data_maker.runners.teacher.hat import HATAdapter
 from sr_data_maker.runners.teacher.realesrgan import RealESRGANRunner
+from sr_data_maker.runners.teacher.swinir import SwinIRAdapter
 from sr_data_maker.sources.image_folder import ImageFolderSourceReader
 
 SOURCE_READERS = Registry("source_readers")
@@ -21,3 +23,5 @@ def register_builtins() -> None:
     if not RUNNERS._items:
         RUNNERS.register("ClassicalDegradationRunner")(ClassicalDegradationRunner)
         RUNNERS.register("RealESRGANRunner")(RealESRGANRunner)
+        RUNNERS.register("SwinIRAdapter")(SwinIRAdapter)
+        RUNNERS.register("HATAdapter")(HATAdapter)
