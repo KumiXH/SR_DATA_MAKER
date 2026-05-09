@@ -586,7 +586,7 @@ The first implementation includes:
 - `PipelineExecutor`
 - YAML config loader with simple `base` inheritance
 - Registry-based component construction
-- CLI commands: `run`, `validate`, `inspect`
+- CLI commands: `run`, `validate`, `inspect`, and `setup realesrgan`
 - `samples.jsonl`, `failures.jsonl`, and `run_summary.json`
 - Mirrored output directories for degraded images and teacher images
 - A reserved `restored/<model_name>/<source_rel_path>` layout for future restoration models
@@ -604,7 +604,7 @@ The first implementation excludes:
 - Large adapter library
 - Learned degradation networks
 - Full restoration model implementations beyond the reserved interface and config shape
-- Automatic model downloading
+- Implicit model downloading during generation. Real-ESRGAN local repositories and weights are prepared explicitly through `setup realesrgan`.
 - Complex reporting dashboards
 - Full SQLite state store
 
