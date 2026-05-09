@@ -1,0 +1,40 @@
+name: local_swinir_x2
+runtime:
+  device: cpu
+  resume: false
+  seed: 1234
+paths:
+  input_root: C:/Users/kumi/Desktop/SR_HR_IMG/LR
+  output_root: ./data/outputs/local_swinir_x2
+source:
+  type: ImageFolderSourceReader
+  recursive: true
+  exts: [jpg, jpeg, png, webp]
+tasks:
+  - name: teacher_sr_swinir
+    enabled: true
+    type: TeacherSRGenerator
+    runner:
+      type: SwinIRAdapter
+    model:
+      name: SwinIR_x2_classical
+      weights: ./weights/SwinIR_x2_classical.pth
+      download_url: https://github.com/JingyunLiang/SwinIR/releases/download/v0.0/001_classicalSR_DF2K_s64w8_SwinIR-M_x2.pth
+      repo_root: ./third_party/SwinIR
+      scale: 2
+      tile: 512
+      tile_pad: 16
+      half: false
+      patch_size: 1
+      img_size: 64
+      window_size: 8
+      img_range: 1.0
+      depths: [6, 6, 6, 6, 6, 6]
+      embed_dim: 180
+      num_heads: [6, 6, 6, 6, 6, 6]
+      mlp_ratio: 2.0
+      upsampler: pixelshuffle
+      resi_connection: 1conv
+    output:
+      folder_name: SwinIR_x2_classical
+      target_type: pseudo_gt

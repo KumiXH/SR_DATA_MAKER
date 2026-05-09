@@ -1,0 +1,51 @@
+name: sr_mixed_v1
+runtime:
+  device: cpu
+  resume: true
+  seed: 1234
+paths:
+  input_root: ./data/sources/raw
+  output_root: ./data/outputs/sr_mixed_v1
+source:
+  type: ImageFolderSourceReader
+  recursive: true
+  exts: [png, jpg, jpeg, webp]
+tasks:
+  - name: degradation_x2
+    enabled: true
+    type: DegradationGenerator
+    runner:
+      type: ClassicalDegradationRunner
+    degradation:
+      scale: 2
+      blur:
+        enabled: true
+        sigma: [0.2, 2.0]
+      resize:
+        enabled: true
+        mode: bicubic
+      noise:
+        enabled: true
+        std: [1, 10]
+      jpeg:
+        enabled: true
+        quality: [30, 95]
+    output:
+      folder_name: degradation_x2
+      target_type: real_gt
+  - name: teacher_sr_realesrgan
+    enabled: true
+    type: TeacherSRGenerator
+    runner:
+      type: RealESRGANRunner
+    model:
+      name: RealESRGAN_x2plus
+      weights: ./weights/realesrgan_x2plus.pth
+      scale: 2
+      tile: 512
+      tile_pad: 16
+      pre_pad: 0
+      half: true
+    output:
+      folder_name: RealESRGAN_x2plus
+      target_type: pseudo_gt
