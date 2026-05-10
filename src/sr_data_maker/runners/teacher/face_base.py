@@ -22,7 +22,7 @@ class FaceTeacherRunnerBase:
 
         self._add_repo_to_path()
         torch = self._import_torch()
-        output = self._run_inference(image, torch)
+        output = self._restore_image(image, torch)
         return RunnerOutput(outputs={"image": output}, meta=self._provenance())
 
     def _weights_path(self) -> Path:
@@ -58,6 +58,9 @@ class FaceTeacherRunnerBase:
 
     def _run_inference(self, image: Any, torch: Any):
         raise NotImplementedError
+
+    def _restore_image(self, image: Any, torch: Any):
+        return self._run_inference(image, torch)
 
     def _provenance(self) -> dict[str, Any]:
         return {

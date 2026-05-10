@@ -11,7 +11,7 @@ class CodeFormerRunner(FaceTeacherRunnerBase):
     display_name = "CodeFormer"
 
     def _run_inference(self, image: Any, torch: Any):
-        return image
+        return image.copy()
 
     def _provenance(self) -> dict[str, Any]:
         return {

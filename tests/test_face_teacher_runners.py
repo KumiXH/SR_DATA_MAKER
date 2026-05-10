@@ -82,3 +82,116 @@ def test_vqfr_runner_exposes_fidelity_ratio(tmp_path):
 
     assert output.meta["face_model_family"] == "VQFR"
     assert output.meta["fidelity_ratio"] == 0.85
+
+
+def test_gfpgan_runner_uses_restorer_and_returns_restored_image(tmp_path):
+    weights = tmp_path / "gfpgan.pth"
+    weights.write_bytes(b"weights")
+
+    class FakeRestorer:
+        def __init__(self):
+            self.calls = []
+
+        def enhance(self, img, has_aligned, only_center_face, paste_back, weight):
+            self.calls.append((img.shape, has_aligned, only_center_face, paste_back, weight))
+            return [], [], img
+
+    class TestableGFPGANRunner(GFPGANRunner):
+        def _import_torch(self):
+            return object()
+
+        def _build_restorer(self, torch):
+            self.restorer = FakeRestorer()
+            return self.restorer
+
+    runner = TestableGFPGANRunner(
+        name="GFPGAN_x2",
+        weights=str(weights),
+        scale=2,
+        only_center_face=True,
+        weight=0.6,
+    )
+
+    output = runner.run({"image": Image.new("RGB", (8, 8), "white")}, context=None)
+
+    assert output.outputs["image"].size == (8, 8)
+    assert runner.restorer.calls[0][1:] == (False, True, True, 0.6)
+
+
+def test_codeformer_runner_uses_restoration_pipeline_and_returns_image(tmp_path):
+    weights = tmp_path / "codeformer.pth"
+    weights.write_bytes(b"weights")
+
+    class TestableCodeFormerRunner(CodeFormerRunner):
+        def _import_torch(self):
+            return object()
+
+        def _restore_image(self, image, torch):
+            return image.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+
+    runner = TestableCodeFormerRunner(
+        name="CodeFormer_x2",
+        weights=str(weights),
+        scale=2,
+        fidelity_weight=0.7,
+    )
+
+    source = Image.new("RGB", (8, 8), "white")
+    output = runner.run({"image": source}, context=None)
+
+    assert output.outputs["image"].size == (8, 8)
+    assert output.outputs["image"] is not source
+
+
+def test_vqfr_runner_uses_demo_restorer_and_returns_restored_image(tmp_path):
+    weights = tmp_path / "vqfr.pth"
+    weights.write_bytes(b"weights")
+
+    class FakeRestorer:
+        def __init__(self):
+            self.calls = []
+
+        def enhance(self, img, fidelity_ratio, has_aligned, only_center_face, paste_back):
+            self.calls.append((img.shape, fidelity_ratio, has_aligned, only_center_face, paste_back))
+            return [], [], img
+
+    class TestableVQFRRunner(VQFRRunner):
+        def _import_torch(self):
+            return object()
+
+        def _build_restorer(self, torch):
+            self.restorer = FakeRestorer()
+            return self.restorer
+
+    runner = TestableVQFRRunner(
+        name="VQFR_x2",
+        weights=str(weights),
+        scale=2,
+        fidelity_ratio=0.85,
+        only_center_face=False,
+    )
+
+    output = runner.run({"image": Image.new("RGB", (8, 8), "white")}, context=None)
+
+    assert output.outputs["image"].size == (8, 8)
+    assert runner.restorer.calls[0][1:] == (0.85, False, False, True)
+
+
+def test_codeformer_runner_restore_image_uses_run_inference_hook(tmp_path):
+    weights = tmp_path / "codeformer.pth"
+    weights.write_bytes(b"weights")
+    called = {}
+
+    class TestableCodeFormerRunner(CodeFormerRunner):
+        def _import_torch(self):
+            return object()
+
+        def _run_inference(self, image, torch):
+            called["used"] = True
+            return image.copy()
+
+    runner = TestableCodeFormerRunner(name="CodeFormer_x2", weights=str(weights), scale=2)
+    output = runner.run({"image": Image.new("RGB", (8, 8), "white")}, context=None)
+
+    assert output.outputs["image"].size == (8, 8)
+    assert called["used"] is True
