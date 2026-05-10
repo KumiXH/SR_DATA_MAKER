@@ -1,0 +1,36 @@
+name: scut_face_vqfr_x2
+runtime:
+  device: cpu
+  resume: false
+  seed: 1234
+paths:
+  input_root: D:/SR数据集/网络数据集收集归类/人脸/academic_SCUT_FBP5500_Asian_modern_100
+  output_root: ./data/outputs/scut_face_vqfr_x2
+source:
+  type: ImageFolderSourceReader
+  recursive: true
+  exts: [jpg, jpeg, png, webp]
+tasks:
+  - name: teacher_face_vqfr
+    enabled: true
+    type: TeacherSRGenerator
+    runner:
+      type: VQFRRunner
+    model:
+      name: VQFR_x2
+      weights: ./weights/VQFR_x2.pth
+      repo_root: ./third_party/VQFR
+      facelib_root: ./third_party/facexlib
+      basicsr_root: ./third_party/BasicSR
+      download_url: https://github.com/TencentARC/VQFR/releases/download/v2.0.0/VQFR_v2.pth
+      scale: 2
+      fidelity_ratio: 0.85
+      has_aligned: false
+      only_center_face: false
+      paste_back: true
+      bg_upsampler: null
+      arch: v2
+      half: false
+    output:
+      folder_name: VQFR_x2
+      target_type: pseudo_gt

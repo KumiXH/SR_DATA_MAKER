@@ -4,9 +4,12 @@ from sr_data_maker.core.registry import Registry
 from sr_data_maker.generators.degradation import DegradationGenerator
 from sr_data_maker.generators.teacher_sr import TeacherSRGenerator
 from sr_data_maker.runners.degradation.classical import ClassicalDegradationRunner
+from sr_data_maker.runners.teacher.codeformer import CodeFormerRunner
+from sr_data_maker.runners.teacher.gfpgan import GFPGANRunner
 from sr_data_maker.runners.teacher.hat import HATAdapter
 from sr_data_maker.runners.teacher.realesrgan import RealESRGANRunner
 from sr_data_maker.runners.teacher.swinir import SwinIRAdapter
+from sr_data_maker.runners.teacher.vqfr import VQFRRunner
 from sr_data_maker.sources.image_folder import ImageFolderSourceReader
 
 SOURCE_READERS = Registry("source_readers")
@@ -25,3 +28,6 @@ def register_builtins() -> None:
         RUNNERS.register("RealESRGANRunner")(RealESRGANRunner)
         RUNNERS.register("SwinIRAdapter")(SwinIRAdapter)
         RUNNERS.register("HATAdapter")(HATAdapter)
+        RUNNERS.register("GFPGANRunner")(GFPGANRunner)
+        RUNNERS.register("CodeFormerRunner")(CodeFormerRunner)
+        RUNNERS.register("VQFRRunner")(VQFRRunner)

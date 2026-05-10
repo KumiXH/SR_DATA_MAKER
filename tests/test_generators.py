@@ -46,3 +46,35 @@ def test_teacher_generator_uses_model_folder_name(tmp_path):
 
     assert sample.output_path == "teacher/RealESRGAN_x2plus/a/b.png"
     assert sample.manifest["target"]["target_type"] == "pseudo_gt"
+
+
+def test_teacher_generator_preserves_face_runner_provenance(tmp_path):
+    class FaceRunner:
+        name = "CodeFormerRunner"
+
+        def run(self, inputs, context):
+            return RunnerOutput(
+                outputs={"image": Image.new("RGB", (2, 2), "black")},
+                meta={
+                    "face_model": True,
+                    "face_model_family": "CodeFormer",
+                    "fidelity_weight": 0.7,
+                },
+            )
+
+    source_path = tmp_path / "a" / "b.png"
+    source_path.parent.mkdir(parents=True)
+    Image.new("RGB", (2, 2), "white").save(source_path)
+    source = SourceRecord(source_id="a/b.png", path=source_path, rel_path="a/b.png", meta={})
+    generator = TeacherSRGenerator(
+        name="teacher_face_codeformer",
+        runner=FaceRunner(),
+        model={"name": "CodeFormer_x2"},
+        output={"folder_name": "CodeFormer_x2"},
+    )
+
+    sample = generator.generate(source, context=None)[0]
+
+    assert sample.manifest["provenance"]["face_model"] is True
+    assert sample.manifest["provenance"]["face_model_family"] == "CodeFormer"
+    assert sample.manifest["provenance"]["fidelity_weight"] == 0.7

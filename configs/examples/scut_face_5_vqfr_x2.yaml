@@ -1,0 +1,35 @@
+name: scut_face_5_vqfr_x2
+runtime:
+  device: cpu
+  resume: false
+  seed: 1234
+paths:
+  input_root: ./data/samples/scut_face_5
+  output_root: ./data/outputs/scut_face_5_vqfr_x2
+source:
+  type: ImageFolderSourceReader
+  recursive: true
+  exts: [jpg, jpeg, png, webp]
+tasks:
+  - name: teacher_face_vqfr
+    enabled: true
+    type: TeacherSRGenerator
+    runner:
+      type: VQFRRunner
+    model:
+      name: VQFR_x2
+      weights: ./weights/VQFR_x2.pth
+      repo_root: ./third_party/VQFR
+      facelib_root: ./third_party/facexlib
+      basicsr_root: ./third_party/BasicSR
+      scale: 2
+      fidelity_ratio: 0.85
+      has_aligned: false
+      only_center_face: false
+      paste_back: true
+      bg_upsampler: null
+      arch: v2
+      half: false
+    output:
+      folder_name: VQFR_x2
+      target_type: pseudo_gt

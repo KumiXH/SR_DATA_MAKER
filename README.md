@@ -6,6 +6,7 @@ The MVP supports:
 
 - Classical degradation output under `degraded/<task_name>/<source_rel_path>`.
 - Real-ESRGAN, SwinIR, and HAT teacher output under `teacher/<model_name>/<source_rel_path>`.
+- GFPGAN, CodeFormer, and VQFR face-focused teacher output under `teacher/<model_name>/<source_rel_path>`.
 - Nested source image folders with mirrored output paths.
 - JSONL manifests for provenance.
 - Windows and Linux execution with non-interactive commands.
@@ -29,6 +30,14 @@ Prepare SwinIR or HAT in the same style:
 ```powershell
 python -m sr_data_maker.cli.main setup swinir --config configs/examples/local_swinir_x2.yaml --project-root .
 python -m sr_data_maker.cli.main setup hat --config configs/examples/local_hat_x2.yaml --project-root .
+```
+
+Prepare the face-focused teacher models in the same style:
+
+```powershell
+python -m sr_data_maker.cli.main setup gfpgan --config configs/examples/local_gfpgan_x2.yaml --project-root .
+python -m sr_data_maker.cli.main setup codeformer --config configs/examples/local_codeformer_x2.yaml --project-root .
+python -m sr_data_maker.cli.main setup vqfr --config configs/examples/local_vqfr_x2.yaml --project-root .
 ```
 
 Run the Real-ESRGAN x2 teacher pipeline:
@@ -72,6 +81,15 @@ Supported default model downloads:
 
 SwinIR uses an official GitHub release link in `configs/examples/local_swinir_x2.yaml`. HAT's official project distributes weights mostly through Google Drive, so `configs/examples/local_hat_x2.yaml` uses a HuggingFace mirror link. Replace `model.download_url` with your preferred internal or official mirror when needed.
 
+`setup gfpgan`, `setup codeformer`, and `setup vqfr` read enabled face-teacher tasks from YAML and prepare:
+
+- the configured model repo root
+- `facexlib` when configured
+- `BasicSR` when configured
+- `model.weights` by downloading `model.download_url`
+
+In this phase, these three models are integrated as face-focused `teacher` outputs rather than a separate `restored/` branch.
+
 ## SwinIR And HAT Adapters
 
 SwinIR and HAT use the same teacher task shape as Real-ESRGAN:
@@ -106,6 +124,12 @@ model:
 ```
 
 Example configs are available at `configs/examples/local_swinir_x2.yaml` and `configs/examples/local_hat_x2.yaml`.
+
+Face-teacher example configs are available at:
+
+- `configs/examples/local_gfpgan_x2.yaml`
+- `configs/examples/local_codeformer_x2.yaml`
+- `configs/examples/local_vqfr_x2.yaml`
 
 ## Output Layout
 
