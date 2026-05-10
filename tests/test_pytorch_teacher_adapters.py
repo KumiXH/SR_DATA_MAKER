@@ -6,8 +6,11 @@ from PIL import Image
 import pytest
 
 from sr_data_maker.plugins import RUNNERS, register_builtins
+from sr_data_maker.runners.teacher.codeformer import CodeFormerRunner
+from sr_data_maker.runners.teacher.gfpgan import GFPGANRunner
 from sr_data_maker.runners.teacher.hat import HATAdapter
 from sr_data_maker.runners.teacher.swinir import SwinIRAdapter
+from sr_data_maker.runners.teacher.vqfr import VQFRRunner
 
 
 def test_swinir_adapter_rejects_missing_weights(tmp_path):
@@ -124,6 +127,18 @@ def test_builtin_registry_includes_swinir_and_hat_adapters():
 
     assert isinstance(swinir, SwinIRAdapter)
     assert isinstance(hat, HATAdapter)
+
+
+def test_builtin_registry_includes_face_teacher_runners():
+    register_builtins()
+
+    gfpgan = RUNNERS.build({"type": "GFPGANRunner", "name": "GFPGAN_x2", "weights": "missing.pth", "scale": 2})
+    codeformer = RUNNERS.build({"type": "CodeFormerRunner", "name": "CodeFormer_x2", "weights": "missing.pth", "scale": 2})
+    vqfr = RUNNERS.build({"type": "VQFRRunner", "name": "VQFR_x2", "weights": "missing.pth", "scale": 2})
+
+    assert isinstance(gfpgan, GFPGANRunner)
+    assert isinstance(codeformer, CodeFormerRunner)
+    assert isinstance(vqfr, VQFRRunner)
 
 
 def test_adapter_adds_repo_and_dependency_roots_to_python_path(monkeypatch, tmp_path):
