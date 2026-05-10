@@ -1,15 +1,53 @@
 # SR Data Maker
 
+[中文说明 / Chinese README](README.zh-CN.md)
+
 YAML-driven training data generation toolkit for super-resolution datasets.
 
-The MVP supports:
+The current project supports:
 
 - Classical degradation output under `degraded/<task_name>/<source_rel_path>`.
-- Real-ESRGAN, SwinIR, and HAT teacher output under `teacher/<model_name>/<source_rel_path>`.
-- GFPGAN, CodeFormer, and VQFR face-focused teacher output under `teacher/<model_name>/<source_rel_path>`.
+- Teacher-model output under `teacher/<model_name>/<source_rel_path>`.
+- Generic SR teachers and face-focused SR/restoration teachers in one pipeline.
 - Nested source image folders with mirrored output paths.
 - JSONL manifests for provenance.
 - Windows and Linux execution with non-interactive commands.
+
+## Model Registry
+
+The table below summarizes the SR and face-teacher models currently integrated in this repository.
+
+| Model | Runner / Adapter | Category | Nominal Scale | Actual Output Behavior | Source | Example YAML |
+| --- | --- | --- | --- | --- | --- | --- |
+| Real-ESRGAN x2plus | `RealESRGANRunner` | General SR | x2 | Whole-image x2 SR | [xinntao/Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN) | `configs/examples/local_realesrgan_x2.yaml` |
+| SwinIR x2 classical | `SwinIRAdapter` | General SR | x2 | Whole-image x2 SR | [JingyunLiang/SwinIR](https://github.com/JingyunLiang/SwinIR) | `configs/examples/local_swinir_x2.yaml` |
+| HAT SRx2 | `HATAdapter` | General SR | x2 | Whole-image x2 SR | [XPixelGroup/HAT](https://github.com/XPixelGroup/HAT) | `configs/examples/local_hat_x2.yaml` |
+| GFPGAN v1.4 | `GFPGANRunner` | Face SR / restoration | x2 | Whole-image face restoration with x2 output | [TencentARC/GFPGAN](https://github.com/TencentARC/GFPGAN) | `configs/examples/local_gfpgan_x2.yaml` |
+| CodeFormer | `CodeFormerRunner` | Face SR / restoration | x2 config | Whole-image face restoration plus face upsample; output size follows the official face-upsample path and may exceed strict x2 | [sczhou/CodeFormer](https://github.com/sczhou/CodeFormer) | `configs/examples/local_codeformer_x2.yaml` |
+| VQFR v2 | `VQFRRunner` | Face SR / restoration | x2 | Whole-image face restoration with x2 output | [TencentARC/VQFR](https://github.com/TencentARC/VQFR) | `configs/examples/local_vqfr_x2.yaml` |
+
+## Reference YAMLs
+
+Local example configs:
+
+- `configs/examples/local_realesrgan_x2.yaml`
+- `configs/examples/local_swinir_x2.yaml`
+- `configs/examples/local_hat_x2.yaml`
+- `configs/examples/local_gfpgan_x2.yaml`
+- `configs/examples/local_codeformer_x2.yaml`
+- `configs/examples/local_vqfr_x2.yaml`
+
+Real face-dataset reference configs:
+
+- `configs/examples/scut_face_gfpgan_x2.yaml`
+- `configs/examples/scut_face_codeformer_x2.yaml`
+- `configs/examples/scut_face_vqfr_x2.yaml`
+
+Five-image smoke-test configs:
+
+- `configs/examples/scut_face_5_gfpgan_x2.yaml`
+- `configs/examples/scut_face_5_codeformer_x2.yaml`
+- `configs/examples/scut_face_5_vqfr_x2.yaml`
 
 ## Quick Start
 
@@ -40,7 +78,7 @@ python -m sr_data_maker.cli.main setup codeformer --config configs/examples/loca
 python -m sr_data_maker.cli.main setup vqfr --config configs/examples/local_vqfr_x2.yaml --project-root .
 ```
 
-Run the Real-ESRGAN x2 teacher pipeline:
+Run a teacher pipeline:
 
 ```powershell
 $env:KMP_DUPLICATE_LIB_OK='TRUE'
@@ -66,8 +104,6 @@ python -m sr_data_maker.cli.main run --config configs/examples/local_realesrgan_
 - `weights/RealESRGAN_x2plus.pth`
 - local `version.py` compatibility files needed by the source checkouts
 
-The command is idempotent. Existing repositories and weights are skipped. `third_party/` and `weights/` are intentionally ignored by Git, so generated external code and model files stay local.
-
 Supported default model downloads:
 
 - `RealESRGAN_x2plus`
@@ -79,8 +115,6 @@ Supported default model downloads:
 - the configured `basicsr_root` for HAT when present
 - `model.weights` by downloading `model.download_url`
 
-SwinIR uses an official GitHub release link in `configs/examples/local_swinir_x2.yaml`. HAT's official project distributes weights mostly through Google Drive, so `configs/examples/local_hat_x2.yaml` uses a HuggingFace mirror link. Replace `model.download_url` with your preferred internal or official mirror when needed.
-
 `setup gfpgan`, `setup codeformer`, and `setup vqfr` read enabled face-teacher tasks from YAML and prepare:
 
 - the configured model repo root
@@ -88,52 +122,11 @@ SwinIR uses an official GitHub release link in `configs/examples/local_swinir_x2
 - `BasicSR` when configured
 - `model.weights` by downloading `model.download_url`
 
-In this phase, these three models are integrated as face-focused `teacher` outputs rather than a separate `restored/` branch.
-
-## SwinIR And HAT Adapters
-
-SwinIR and HAT use the same teacher task shape as Real-ESRGAN:
-
-```yaml
-runner:
-  type: SwinIRAdapter
-model:
-  name: SwinIR_x2_classical
-  weights: ./weights/SwinIR_x2_classical.pth
-  download_url: https://github.com/JingyunLiang/SwinIR/releases/download/v0.0/001_classicalSR_DF2K_s64w8_SwinIR-M_x2.pth
-  repo_root: ./third_party/SwinIR
-  scale: 2
-  tile: 512
-  tile_pad: 16
-  half: false
-```
-
-```yaml
-runner:
-  type: HATAdapter
-model:
-  name: HAT_SRx2
-  weights: ./weights/HAT_SRx2.pth
-  download_url: https://huggingface.co/jaideepsingh/upscale_models/resolve/main/HAT/HAT_SRx2.pth?download=true
-  repo_root: ./third_party/HAT
-  basicsr_root: ./third_party/BasicSR
-  scale: 2
-  tile: 512
-  tile_pad: 16
-  half: false
-```
-
-Example configs are available at `configs/examples/local_swinir_x2.yaml` and `configs/examples/local_hat_x2.yaml`.
-
-Face-teacher example configs are available at:
-
-- `configs/examples/local_gfpgan_x2.yaml`
-- `configs/examples/local_codeformer_x2.yaml`
-- `configs/examples/local_vqfr_x2.yaml`
+All setup commands are designed to be idempotent. Existing repositories and weights are skipped. `third_party/` and `weights/` stay ignored by Git so external code and model files remain local.
 
 ## Output Layout
 
-Source images are not copied into the output dataset. Generated files preserve the relative path from `paths.input_root`:
+Source images are not copied into the output dataset by default. Generated files preserve the relative path from `paths.input_root`:
 
 ```text
 data/outputs/local_realesrgan_x2/
@@ -145,6 +138,8 @@ data/outputs/local_realesrgan_x2/
     RealESRGAN_x2plus/
       city/day/img001.png
 ```
+
+For manual visual comparison, you can additionally place source images beside model outputs in an ad hoc `compare/` folder.
 
 ## User Workflow
 
