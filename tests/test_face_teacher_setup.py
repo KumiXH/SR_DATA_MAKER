@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+from sr_data_maker.cli.main import main
 from sr_data_maker.setup.face_teacher import (
     CODEFORMER_REPO_URL,
     FACEXLIB_REPO_URL,
@@ -137,3 +138,102 @@ def test_vqfr_setup_uses_default_repo_url(tmp_path):
 
     assert result["repos"]["main"]["path"].endswith("VQFR")
     assert result["weights"]["path"].endswith("VQFR_x2.pth")
+
+
+def test_cli_setup_gfpgan_uses_config(monkeypatch, tmp_path):
+    config_path = tmp_path / "config.yaml"
+    config_path.write_text(
+        """
+tasks:
+  - enabled: true
+    runner:
+      type: GFPGANRunner
+    model:
+      name: GFPGAN_x2
+      weights: ./weights/GFPGAN_x2.pth
+      repo_root: ./third_party/GFPGAN
+      download_url: https://example.test/gfpgan.pth
+""",
+        encoding="utf-8",
+    )
+    calls: list[tuple[dict, Path]] = []
+
+    def fake_setup(config, project_root):
+        calls.append((config, Path(project_root)))
+        return [{"model_name": "GFPGAN_x2"}]
+
+    monkeypatch.setattr("sr_data_maker.cli.main.setup_gfpgan_from_config", fake_setup)
+    monkeypatch.setattr(
+        "sys.argv",
+        ["sr-data-maker", "setup", "gfpgan", "--config", str(config_path), "--project-root", str(tmp_path)],
+    )
+
+    assert main() == 0
+    assert len(calls) == 1
+    assert calls[0][1] == tmp_path
+
+
+def test_cli_setup_codeformer_uses_config(monkeypatch, tmp_path):
+    config_path = tmp_path / "config.yaml"
+    config_path.write_text(
+        """
+tasks:
+  - enabled: true
+    runner:
+      type: CodeFormerRunner
+    model:
+      name: CodeFormer_x2
+      weights: ./weights/CodeFormer_x2.pth
+      repo_root: ./third_party/CodeFormer
+      download_url: https://example.test/codeformer.pth
+""",
+        encoding="utf-8",
+    )
+    calls: list[tuple[dict, Path]] = []
+
+    def fake_setup(config, project_root):
+        calls.append((config, Path(project_root)))
+        return [{"model_name": "CodeFormer_x2"}]
+
+    monkeypatch.setattr("sr_data_maker.cli.main.setup_codeformer_from_config", fake_setup)
+    monkeypatch.setattr(
+        "sys.argv",
+        ["sr-data-maker", "setup", "codeformer", "--config", str(config_path), "--project-root", str(tmp_path)],
+    )
+
+    assert main() == 0
+    assert len(calls) == 1
+    assert calls[0][1] == tmp_path
+
+
+def test_cli_setup_vqfr_uses_config(monkeypatch, tmp_path):
+    config_path = tmp_path / "config.yaml"
+    config_path.write_text(
+        """
+tasks:
+  - enabled: true
+    runner:
+      type: VQFRRunner
+    model:
+      name: VQFR_x2
+      weights: ./weights/VQFR_x2.pth
+      repo_root: ./third_party/VQFR
+      download_url: https://example.test/vqfr.pth
+""",
+        encoding="utf-8",
+    )
+    calls: list[tuple[dict, Path]] = []
+
+    def fake_setup(config, project_root):
+        calls.append((config, Path(project_root)))
+        return [{"model_name": "VQFR_x2"}]
+
+    monkeypatch.setattr("sr_data_maker.cli.main.setup_vqfr_from_config", fake_setup)
+    monkeypatch.setattr(
+        "sys.argv",
+        ["sr-data-maker", "setup", "vqfr", "--config", str(config_path), "--project-root", str(tmp_path)],
+    )
+
+    assert main() == 0
+    assert len(calls) == 1
+    assert calls[0][1] == tmp_path

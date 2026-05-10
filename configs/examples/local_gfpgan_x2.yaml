@@ -1,0 +1,33 @@
+name: local_gfpgan_x2
+runtime:
+  device: cpu
+  resume: false
+  seed: 1234
+paths:
+  input_root: C:/Users/kumi/Desktop/SR_HR_IMG/LR
+  output_root: ./data/outputs/local_gfpgan_x2
+source:
+  type: ImageFolderSourceReader
+  recursive: true
+  exts: [jpg, jpeg, png, webp]
+tasks:
+  - name: teacher_face_gfpgan
+    enabled: true
+    type: TeacherSRGenerator
+    runner:
+      type: GFPGANRunner
+    model:
+      name: GFPGAN_x2
+      weights: ./weights/GFPGAN_x2.pth
+      repo_root: ./third_party/GFPGAN
+      facelib_root: ./third_party/facexlib
+      basicsr_root: ./third_party/BasicSR
+      download_url: https://github.com/TencentARC/GFPGAN/releases/download/v1.4.0/GFPGANv1.4.pth
+      scale: 2
+      arch: clean
+      channel_multiplier: 2
+      bg_upsampler: null
+      half: false
+    output:
+      folder_name: GFPGAN_x2
+      target_type: pseudo_gt

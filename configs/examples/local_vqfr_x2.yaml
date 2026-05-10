@@ -1,0 +1,33 @@
+name: local_vqfr_x2
+runtime:
+  device: cpu
+  resume: false
+  seed: 1234
+paths:
+  input_root: C:/Users/kumi/Desktop/SR_HR_IMG/LR
+  output_root: ./data/outputs/local_vqfr_x2
+source:
+  type: ImageFolderSourceReader
+  recursive: true
+  exts: [jpg, jpeg, png, webp]
+tasks:
+  - name: teacher_face_vqfr
+    enabled: true
+    type: TeacherSRGenerator
+    runner:
+      type: VQFRRunner
+    model:
+      name: VQFR_x2
+      weights: ./weights/VQFR_x2.pth
+      repo_root: ./third_party/VQFR
+      facelib_root: ./third_party/facexlib
+      basicsr_root: ./third_party/BasicSR
+      download_url: https://github.com/TencentARC/VQFR/releases/download/v1.0.0/VQFR_v2.pth
+      scale: 2
+      fidelity_ratio: 0.85
+      bg_upsampler: null
+      arch: VQFRv2
+      half: false
+    output:
+      folder_name: VQFR_x2
+      target_type: pseudo_gt

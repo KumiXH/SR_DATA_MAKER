@@ -7,6 +7,12 @@ from pathlib import Path
 from sr_data_maker.config.loader import load_config
 from sr_data_maker.config.validator import validate_config
 from sr_data_maker.orchestration.executor import PipelineExecutor
+from sr_data_maker.setup.face_teacher import (
+    print_face_teacher_setup_summary,
+    setup_codeformer_from_config,
+    setup_gfpgan_from_config,
+    setup_vqfr_from_config,
+)
 from sr_data_maker.setup.pytorch_teacher import print_teacher_setup_summary, setup_hat_from_config, setup_swinir_from_config
 from sr_data_maker.setup.realesrgan import print_setup_summary, setup_realesrgan_from_config
 
@@ -31,6 +37,15 @@ def main() -> int:
     hat = setup_sub.add_parser("hat")
     hat.add_argument("--config", required=True)
     hat.add_argument("--project-root", default=".")
+    gfpgan = setup_sub.add_parser("gfpgan")
+    gfpgan.add_argument("--config", required=True)
+    gfpgan.add_argument("--project-root", default=".")
+    codeformer = setup_sub.add_parser("codeformer")
+    codeformer.add_argument("--config", required=True)
+    codeformer.add_argument("--project-root", default=".")
+    vqfr = setup_sub.add_parser("vqfr")
+    vqfr.add_argument("--config", required=True)
+    vqfr.add_argument("--project-root", default=".")
 
     args = parser.parse_args()
     if args.command == "run":
@@ -43,6 +58,12 @@ def main() -> int:
         return _setup_swinir(args.config, args.project_root)
     if args.command == "setup" and args.setup_target == "hat":
         return _setup_hat(args.config, args.project_root)
+    if args.command == "setup" and args.setup_target == "gfpgan":
+        return _setup_gfpgan(args.config, args.project_root)
+    if args.command == "setup" and args.setup_target == "codeformer":
+        return _setup_codeformer(args.config, args.project_root)
+    if args.command == "setup" and args.setup_target == "vqfr":
+        return _setup_vqfr(args.config, args.project_root)
     return _inspect(args.dataset)
 
 
@@ -83,6 +104,27 @@ def _setup_hat(config_path: str, project_root: str) -> int:
     config = load_config(config_path)
     results = setup_hat_from_config(config, project_root=project_root)
     print_teacher_setup_summary("hat", results)
+    return 0
+
+
+def _setup_gfpgan(config_path: str, project_root: str) -> int:
+    config = load_config(config_path)
+    results = setup_gfpgan_from_config(config, project_root=project_root)
+    print_face_teacher_setup_summary("gfpgan", results)
+    return 0
+
+
+def _setup_codeformer(config_path: str, project_root: str) -> int:
+    config = load_config(config_path)
+    results = setup_codeformer_from_config(config, project_root=project_root)
+    print_face_teacher_setup_summary("codeformer", results)
+    return 0
+
+
+def _setup_vqfr(config_path: str, project_root: str) -> int:
+    config = load_config(config_path)
+    results = setup_vqfr_from_config(config, project_root=project_root)
+    print_face_teacher_setup_summary("vqfr", results)
     return 0
 
 
