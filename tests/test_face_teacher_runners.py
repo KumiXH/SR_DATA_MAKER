@@ -6,6 +6,7 @@ import pytest
 from sr_data_maker.runners.teacher.codeformer import CodeFormerRunner
 from sr_data_maker.runners.teacher.gfpgan import GFPGANRunner
 from sr_data_maker.runners.teacher.vqfr import VQFRRunner
+from sr_data_maker.runners.teacher.face_base import FaceTeacherRunnerBase
 
 
 def test_gfpgan_runner_rejects_missing_weights(tmp_path):
@@ -195,3 +196,134 @@ def test_codeformer_runner_restore_image_uses_run_inference_hook(tmp_path):
 
     assert output.outputs["image"].size == (8, 8)
     assert called["used"] is True
+
+
+def test_codeformer_runner_can_return_upscaled_restored_image(tmp_path):
+    weights = tmp_path / "codeformer.pth"
+    weights.write_bytes(b"weights")
+
+    class TestableCodeFormerRunner(CodeFormerRunner):
+        def _import_torch(self):
+            return object()
+
+        def _run_inference(self, image, torch):
+            return image.resize((16, 16))
+
+    runner = TestableCodeFormerRunner(
+        name="CodeFormer_x2",
+        weights=str(weights),
+        scale=2,
+        face_upsample=True,
+        paste_back=True,
+    )
+
+    output = runner.run({"image": Image.new("RGB", (8, 8), "white")}, context=None)
+
+    assert output.outputs["image"].size == (16, 16)
+
+
+def test_codeformer_runner_provenance_exposes_paste_back_and_alignment(tmp_path):
+    weights = tmp_path / "codeformer.pth"
+    weights.write_bytes(b"weights")
+
+    class TestableCodeFormerRunner(CodeFormerRunner):
+        def _import_torch(self):
+            return object()
+
+        def _run_inference(self, image, torch):
+            return image
+
+    runner = TestableCodeFormerRunner(
+        name="CodeFormer_x2",
+        weights=str(weights),
+        scale=2,
+        has_aligned=False,
+        paste_back=True,
+    )
+
+    output = runner.run({"image": Image.new("RGB", (8, 8), "white")}, context=None)
+
+    assert output.meta["has_aligned"] is False
+    assert output.meta["paste_back"] is True
+
+
+def test_face_teacher_runner_add_repo_to_path_preserves_declared_priority(tmp_path, monkeypatch):
+    repo_root = tmp_path / "repo"
+    facelib_root = tmp_path / "facelib"
+    basicsr_root = tmp_path / "basicsr"
+    for path in (repo_root, facelib_root, basicsr_root):
+        path.mkdir()
+
+    class DummyRunner(FaceTeacherRunnerBase):
+        display_name = "Dummy"
+
+        def _run_inference(self, image, torch):
+            return image
+
+    runner = DummyRunner(
+        weights=str(tmp_path / "dummy.pth"),
+        repo_root=str(repo_root),
+        facelib_root=str(facelib_root),
+        basicsr_root=str(basicsr_root),
+    )
+
+    import sys
+
+    original = list(sys.path)
+    monkeypatch.setattr(sys, "path", list(original))
+    runner._add_repo_to_path()
+
+    assert sys.path[0:3] == [str(repo_root), str(facelib_root), str(basicsr_root)]
+
+
+def test_codeformer_runner_passes_device_to_face_helper_detection_model(tmp_path, monkeypatch):
+    weights = tmp_path / "codeformer.pth"
+    weights.write_bytes(b"weights")
+
+    captured = {}
+
+    class FakeFaceRestoreHelper:
+        def __init__(self, *args, **kwargs):
+            captured["device"] = kwargs.get("device")
+            self.cropped_faces = []
+            self.det_faces = []
+
+        def clean_all(self):
+            return None
+
+        def read_image(self, image):
+            return None
+
+        def get_face_landmarks_5(self, **kwargs):
+            return 0
+
+        def align_warp_face(self):
+            return None
+
+    import types
+    import sys
+
+    module = types.ModuleType("facelib.utils.face_restoration_helper")
+    module.FaceRestoreHelper = FakeFaceRestoreHelper
+    monkeypatch.setitem(sys.modules, "facelib.utils.face_restoration_helper", module)
+
+    class TestableCodeFormerRunner(CodeFormerRunner):
+        def _import_torch(self):
+            return object()
+
+        def _restore_faces(self, cropped_faces, torch):
+            return []
+
+    runner = TestableCodeFormerRunner(
+        name="CodeFormer_x2",
+        weights=str(weights),
+        repo_root=str(tmp_path),
+        scale=2,
+        device="cpu",
+        has_aligned=False,
+    )
+
+    output = runner.run({"image": Image.new("RGB", (8, 8), "white")}, context=None)
+
+    assert output.outputs["image"].size == (8, 8)
+    assert captured["device"] == "cpu"

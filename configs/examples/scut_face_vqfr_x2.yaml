@@ -1,11 +1,11 @@
-name: local_vqfr_x2
+name: scut_face_vqfr_x2
 runtime:
   device: cpu
   resume: false
   seed: 1234
 paths:
-  input_root: C:/Users/kumi/Desktop/SR_HR_IMG/LR
-  output_root: ./data/outputs/local_vqfr_x2
+  input_root: D:/SR数据集/网络数据集收集归类/人脸/academic_SCUT_FBP5500_Asian_modern_100
+  output_root: ./data/outputs/scut_face_vqfr_x2
 source:
   type: ImageFolderSourceReader
   recursive: true
@@ -25,8 +25,11 @@ tasks:
       download_url: https://github.com/TencentARC/VQFR/releases/download/v2.0.0/VQFR_v2.pth
       scale: 2
       fidelity_ratio: 0.85
+      has_aligned: false
+      only_center_face: false
+      paste_back: true
       bg_upsampler: null
-      arch: VQFRv2
+      arch: v2
       half: false
     output:
       folder_name: VQFR_x2

@@ -1,11 +1,11 @@
-name: local_codeformer_x2
+name: scut_face_5_codeformer_x2
 runtime:
   device: cpu
   resume: false
   seed: 1234
 paths:
-  input_root: C:/Users/kumi/Desktop/SR_HR_IMG/LR
-  output_root: ./data/outputs/local_codeformer_x2
+  input_root: ./data/samples/scut_face_5
+  output_root: ./data/outputs/scut_face_5_codeformer_x2
 source:
   type: ImageFolderSourceReader
   recursive: true
@@ -22,7 +22,6 @@ tasks:
       repo_root: ./third_party/CodeFormer
       facelib_root: ./third_party/facexlib
       basicsr_root: ./third_party/BasicSR
-      download_url: https://github.com/sczhou/CodeFormer/releases/download/v0.1.0/codeformer.pth
       scale: 2
       fidelity_weight: 0.7
       face_upsample: true

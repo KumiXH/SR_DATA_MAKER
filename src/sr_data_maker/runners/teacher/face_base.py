@@ -43,7 +43,7 @@ class FaceTeacherRunnerBase:
         return roots
 
     def _add_repo_to_path(self) -> None:
-        for repo_path in self._repo_roots():
+        for repo_path in reversed(self._repo_roots()):
             if not repo_path.exists():
                 raise FileNotFoundError(f"{self.display_name} repo root not found: {repo_path}")
             repo_str = str(repo_path)

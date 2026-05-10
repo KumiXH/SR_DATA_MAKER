@@ -63,6 +63,7 @@ class FaceTeacherSetup:
                 "status": self._ensure_repo(str(model.get("repo_url", self.default_repo_url)), repo_root),
             }
         }
+        self._ensure_repo_local_versions(repo_root)
 
         facelib_root = model.get("facelib_root")
         if facelib_root:
@@ -71,6 +72,7 @@ class FaceTeacherSetup:
                 "path": str(facelib_path),
                 "status": self._ensure_repo(str(model.get("facelib_repo_url", FACEXLIB_REPO_URL)), facelib_path),
             }
+            self._ensure_version_file(facelib_path / "facexlib" / "version.py")
 
         basicsr_root = model.get("basicsr_root")
         if basicsr_root:
@@ -119,6 +121,14 @@ class FaceTeacherSetup:
         path.parent.mkdir(parents=True, exist_ok=True)
         if not path.exists():
             path.write_text('__version__ = "local"\n__gitsha__ = "local"\n', encoding="utf-8")
+
+    def _ensure_repo_local_versions(self, repo_root: Path) -> None:
+        basicsr_version = repo_root / "basicsr" / "version.py"
+        if basicsr_version.parent.exists():
+            self._ensure_version_file(basicsr_version)
+        facexlib_version = repo_root / "facexlib" / "version.py"
+        if facexlib_version.parent.exists():
+            self._ensure_version_file(facexlib_version)
 
 
 def setup_gfpgan_from_config(config: dict[str, Any], project_root: str | Path) -> list[dict[str, Any]]:

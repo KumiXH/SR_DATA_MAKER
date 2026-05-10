@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import importlib
+import sys
 from typing import Any
 
 import numpy as np
@@ -27,6 +29,7 @@ class VQFRRunner(FaceTeacherRunnerBase):
         return self._from_bgr_array(restored)
 
     def _build_restorer(self, torch: Any):
+        self._ensure_torchvision_compat()
         from vqfr.demo_util import VQFR_Demo
 
         device = self.model.get("device")
@@ -37,6 +40,13 @@ class VQFRRunner(FaceTeacherRunnerBase):
             bg_upsampler=None,
             device=device,
         )
+
+    @staticmethod
+    def _ensure_torchvision_compat() -> None:
+        if "torchvision.transforms.functional_tensor" in sys.modules:
+            return
+        functional = importlib.import_module("torchvision.transforms.functional")
+        sys.modules["torchvision.transforms.functional_tensor"] = functional
 
     @staticmethod
     def _to_bgr_array(image: Any):

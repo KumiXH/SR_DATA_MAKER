@@ -1,11 +1,11 @@
-name: local_codeformer_x2
+name: scut_face_codeformer_x2
 runtime:
   device: cpu
   resume: false
   seed: 1234
 paths:
-  input_root: C:/Users/kumi/Desktop/SR_HR_IMG/LR
-  output_root: ./data/outputs/local_codeformer_x2
+  input_root: D:/SR数据集/网络数据集收集归类/人脸/academic_SCUT_FBP5500_Asian_modern_100
+  output_root: ./data/outputs/scut_face_codeformer_x2
 source:
   type: ImageFolderSourceReader
   recursive: true
