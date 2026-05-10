@@ -116,6 +116,42 @@ def test_hat_adapter_builds_model_from_yaml_params(tmp_path):
     assert captured["model_config"]["embed_dim"] == 180
 
 
+def test_pytorch_adapter_caches_loaded_model_across_multiple_runs(tmp_path):
+    weights = tmp_path / "cached.pth"
+    weights.write_bytes(b"weights")
+    captured = {"builds": 0, "loads": 0}
+
+    class DummyModel:
+        pass
+
+    class TestableSwinIRAdapter(SwinIRAdapter):
+        def _import_torch(self):
+            return object()
+
+        def _build_model(self):
+            captured["builds"] += 1
+            return DummyModel()
+
+        def _load_weights(self, model, weights_path, torch):
+            captured["loads"] += 1
+
+        def _run_model(self, image, model, torch):
+            return image
+
+    runner = TestableSwinIRAdapter(
+        name="SwinIR_x2_classical",
+        weights=str(weights),
+        scale=2,
+    )
+
+    image = Image.new("RGB", (8, 8), "white")
+    runner.run({"image": image}, context=None)
+    runner.run({"image": image}, context=None)
+
+    assert captured["builds"] == 1
+    assert captured["loads"] == 1
+
+
 def test_builtin_registry_includes_swinir_and_hat_adapters():
     register_builtins()
 

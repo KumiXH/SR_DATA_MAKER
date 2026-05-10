@@ -18,10 +18,11 @@ class PipelineExecutor:
         writer = DatasetWriter(output_root=output_root)
         state = RunStateStore(output_root=output_root)
         source_reader = SOURCE_READERS.build(config["source"], root=config["paths"]["input_root"])
+        task_handlers = self._build_task_handlers(config["tasks"], config["runtime"])
 
         summary = {"succeeded": 0, "skipped_tasks": 0, "failed": 0}
         for source in source_reader.iter_sources():
-            for task in config["tasks"]:
+            for task, generator in task_handlers:
                 if not task.get("enabled", True):
                     summary["skipped_tasks"] += 1
                     continue
@@ -32,8 +33,6 @@ class PipelineExecutor:
                     continue
 
                 try:
-                    runner = self._build_runner(task, config["runtime"])
-                    generator = self._build_generator(task, runner)
                     samples = generator.generate(source, context=None)
                     for sample in samples:
                         writer.write_image(sample.output_path, sample.image)
@@ -46,6 +45,17 @@ class PipelineExecutor:
 
         writer.write_summary(summary)
         return summary
+
+    def _build_task_handlers(self, tasks: list[dict[str, Any]], runtime: dict[str, Any]) -> list[tuple[dict[str, Any], Any]]:
+        handlers: list[tuple[dict[str, Any], Any]] = []
+        for task in tasks:
+            if task.get("enabled", True):
+                runner = self._build_runner(task, runtime)
+                generator = self._build_generator(task, runner)
+                handlers.append((task, generator))
+                continue
+            handlers.append((task, None))
+        return handlers
 
     @staticmethod
     def _build_runner(task: dict[str, Any], runtime: dict[str, Any]):

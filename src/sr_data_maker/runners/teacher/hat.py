@@ -1,6 +1,12 @@
 from __future__ import annotations
 
+import importlib.util
+from pathlib import Path
+from types import ModuleType
+
 from sr_data_maker.runners.teacher.pytorch_sr import PyTorchSRAdapter, as_tuple
+
+_HAT_ARCH_MODULE: ModuleType | None = None
 
 
 class HATAdapter(PyTorchSRAdapter):
@@ -8,12 +14,16 @@ class HATAdapter(PyTorchSRAdapter):
     display_name = "HAT"
 
     def _build_model(self):
-        try:
-            from hat.archs.hat_arch import HAT
-        except ImportError as exc:
-            raise ImportError(
-                "HATAdapter requires the official HAT repo. Configure model.repo_root or clone it under third_party/HAT."
-            ) from exc
+        repo_root = self.model.get("repo_root")
+        if repo_root:
+            HAT = self._load_hat_arch_from_file(
+                ImportError("Loading HAT directly from repo_root to avoid package side effects.")
+            )
+        else:
+            try:
+                from hat.archs.hat_arch import HAT
+            except ImportError as exc:
+                HAT = self._load_hat_arch_from_file(exc)
 
         scale = int(self.model.get("scale", 2))
         return HAT(
@@ -42,3 +52,27 @@ class HATAdapter(PyTorchSRAdapter):
             upsampler=str(self.model.get("upsampler", "pixelshuffle")),
             resi_connection=str(self.model.get("resi_connection", "1conv")),
         )
+
+    def _load_hat_arch_from_file(self, original_error: Exception):
+        global _HAT_ARCH_MODULE
+        repo_root = self.model.get("repo_root")
+        if not repo_root:
+            raise ImportError(
+                "HATAdapter requires the official HAT repo. Configure model.repo_root or clone it under third_party/HAT."
+            ) from original_error
+
+        module_path = Path(str(repo_root)) / "hat" / "archs" / "hat_arch.py"
+        if not module_path.exists():
+            raise ImportError(
+                "HATAdapter requires the official HAT repo. Configure model.repo_root or clone it under third_party/HAT."
+            ) from original_error
+
+        spec = importlib.util.spec_from_file_location("sr_data_maker_hat_arch", module_path)
+        if spec is None or spec.loader is None:
+            raise ImportError(f"Could not load HAT architecture module from: {module_path}") from original_error
+
+        if _HAT_ARCH_MODULE is None:
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            _HAT_ARCH_MODULE = module
+        return _HAT_ARCH_MODULE.HAT

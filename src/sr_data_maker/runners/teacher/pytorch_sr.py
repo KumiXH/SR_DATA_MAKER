@@ -14,6 +14,8 @@ class PyTorchSRAdapter:
 
     def __init__(self, **model: Any) -> None:
         self.model = model
+        self._torch = None
+        self._sr_model = None
 
     def run(self, inputs: dict[str, Any], context: Any) -> RunnerOutput:
         image = inputs["image"]
@@ -22,9 +24,8 @@ class PyTorchSRAdapter:
             raise FileNotFoundError(f"{self.display_name} weights not found: {weights}")
 
         self._add_repo_to_path()
-        torch = self._import_torch()
-        sr_model = self._build_model()
-        self._load_weights(sr_model, weights, torch)
+        torch = self._get_torch()
+        sr_model = self._get_or_create_model(weights, torch)
         output = self._run_model(image, sr_model, torch)
         return RunnerOutput(outputs={"image": output}, meta={"model": dict(self.model)})
 
@@ -62,6 +63,18 @@ class PyTorchSRAdapter:
 
         return torch
 
+    def _get_torch(self):
+        if self._torch is None:
+            self._torch = self._import_torch()
+        return self._torch
+
+    def _get_or_create_model(self, weights: Path, torch: Any):
+        if self._sr_model is None:
+            sr_model = self._build_model()
+            self._load_weights(sr_model, weights, torch)
+            self._sr_model = sr_model
+        return self._sr_model
+
     def _build_model(self):
         raise NotImplementedError
 
@@ -81,9 +94,11 @@ class PyTorchSRAdapter:
         tensor = self._image_to_tensor(image, torch).to(device)
         if bool(self.model.get("half", False)) and str(device).startswith("cuda"):
             tensor = tensor.half()
+        tensor, pad_h, pad_w = self._pad_to_window_size(tensor, torch)
 
         with torch.no_grad():
             output = self._forward_tensor(model, tensor, torch)
+        output = self._crop_scaled_output(output, pad_h, pad_w)
         return self._tensor_to_image(output, torch)
 
     def _forward_tensor(self, model: Any, tensor: Any, torch: Any):
@@ -139,6 +154,26 @@ class PyTorchSRAdapter:
         if device:
             return torch.device(device)
         return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    def _pad_to_window_size(self, tensor: Any, torch: Any):
+        window_size = int(self.model.get("window_size", 1) or 1)
+        if window_size <= 1:
+            return tensor, 0, 0
+        _, _, height, width = tensor.size()
+        pad_h = (window_size - height % window_size) % window_size
+        pad_w = (window_size - width % window_size) % window_size
+        if pad_h == 0 and pad_w == 0:
+            return tensor, 0, 0
+        padded = torch.nn.functional.pad(tensor, (0, pad_w, 0, pad_h), mode="reflect")
+        return padded, pad_h, pad_w
+
+    def _crop_scaled_output(self, output: Any, pad_h: int, pad_w: int):
+        if pad_h == 0 and pad_w == 0:
+            return output
+        scale = int(self.model.get("scale", 2))
+        height = output.size(2) - pad_h * scale
+        width = output.size(3) - pad_w * scale
+        return output[:, :, :height, :width]
 
     @staticmethod
     def _image_to_tensor(image: Any, torch: Any):
