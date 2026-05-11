@@ -26,6 +26,13 @@ The table below summarizes the SR and face-teacher models currently integrated i
 | CodeFormer | `CodeFormerRunner` | Face SR / restoration | x2 config | Whole-image face restoration plus face upsample; output size follows the official face-upsample path and may exceed strict x2 | [sczhou/CodeFormer](https://github.com/sczhou/CodeFormer) | `configs/examples/local_codeformer_x2.yaml` |
 | VQFR v2 | `VQFRRunner` | Face SR / restoration | x2 | Whole-image face restoration with x2 output | [TencentARC/VQFR](https://github.com/TencentARC/VQFR) | `configs/examples/local_vqfr_x2.yaml` |
 
+## Datasets
+
+For China-focused face-dataset research and selection notes, see:
+
+- [China-focused face datasets](docs/face-datasets-china-focused.md)
+- [中国人脸数据集整理](docs/face-datasets-china-focused.zh-CN.md)
+
 ## Reference YAMLs
 
 Local example configs:

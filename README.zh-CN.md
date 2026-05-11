@@ -26,6 +26,13 @@
 | CodeFormer | `CodeFormerRunner` | 人脸超分 / 修复 | 配置为 x2 | 走官方整图人脸修复与 face upsample 路线，最终输出尺寸可能大于严格 x2 | [sczhou/CodeFormer](https://github.com/sczhou/CodeFormer) | `configs/examples/local_codeformer_x2.yaml` |
 | VQFR v2 | `VQFRRunner` | 人脸超分 / 修复 | x2 | 整图人脸修复并输出 x2 结果 | [TencentARC/VQFR](https://github.com/TencentARC/VQFR) | `configs/examples/local_vqfr_x2.yaml` |
 
+## 数据集
+
+如果要看偏中国/东亚人脸的数据集调研和选型说明，可以直接跳转到：
+
+- [China-focused face datasets](docs/face-datasets-china-focused.md)
+- [中国人脸数据集整理](docs/face-datasets-china-focused.zh-CN.md)
+
 ## 参考 YAML
 
 本地示例配置：
