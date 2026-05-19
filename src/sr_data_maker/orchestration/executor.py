@@ -64,7 +64,7 @@ class PipelineExecutor:
         params = {}
         params.update(task.get("degradation", {}))
         params.update(task.get("model", {}))
-        if runner_type == "RealESRGANRunner" and "device" not in params and runtime.get("device"):
+        if runner_type != "ClassicalDegradationRunner" and "device" not in params and runtime.get("device"):
             params["device"] = runtime["device"]
         return RUNNERS.build({"type": runner_type, **params})
 

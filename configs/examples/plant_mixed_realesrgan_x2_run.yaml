@@ -1,0 +1,31 @@
+name: plant_mixed_realesrgan_x2_run
+runtime:
+  device: cpu
+  resume: true
+  seed: 1234
+paths:
+  input_root: D:/SR数据集/网络数据集收集归类/绿植/style_diverse_mixed_sources_1200plus
+  output_root: ./data/outputs/plant_mixed_realesrgan_x2
+source:
+  type: ImageFolderSourceReader
+  recursive: true
+  exts: [jpg, jpeg, png, webp]
+tasks:
+  - name: teacher_sr_realesrgan
+    enabled: true
+    type: TeacherSRGenerator
+    runner:
+      type: RealESRGANRunner
+    model:
+      name: RealESRGAN_x2plus
+      weights: ./weights/RealESRGAN_x2plus.pth
+      repo_root: ./third_party/Real-ESRGAN
+      basicsr_root: ./third_party/BasicSR
+      scale: 2
+      tile: 256
+      tile_pad: 16
+      pre_pad: 0
+      half: false
+    output:
+      folder_name: RealESRGAN_x2plus
+      target_type: pseudo_gt

@@ -80,7 +80,8 @@ class CodeFormerRunner(FaceTeacherRunnerBase):
 
         net = self._build_network(torch)
         restored_faces: list[Any] = []
-        for cropped_face in cropped_faces:
+        total_faces = len(cropped_faces)
+        for index, cropped_face in enumerate(cropped_faces, start=1):
             cropped_face_t = img2tensor(cropped_face / 255.0, bgr2rgb=True, float32=True)
             normalize(cropped_face_t, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5), inplace=True)
             cropped_face_t = cropped_face_t.unsqueeze(0).to(self.model.get("device"))
@@ -95,8 +96,8 @@ class CodeFormerRunner(FaceTeacherRunnerBase):
                     restored_face = tensor2img(output, rgb2bgr=True, min_max=(-1, 1))
                 del output
                 torch.cuda.empty_cache()
-            except Exception:
-                restored_face = tensor2img(cropped_face_t, rgb2bgr=True, min_max=(-1, 1))
+            except Exception as exc:
+                raise RuntimeError(f"CodeFormer failed to restore face {index}/{total_faces}: {exc}") from exc
             restored_faces.append(restored_face.astype("uint8"))
         return restored_faces
 

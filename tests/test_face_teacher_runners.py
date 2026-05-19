@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import numpy as np
 from PIL import Image
 import pytest
 
@@ -220,6 +221,61 @@ def test_codeformer_runner_can_return_upscaled_restored_image(tmp_path):
     output = runner.run({"image": Image.new("RGB", (8, 8), "white")}, context=None)
 
     assert output.outputs["image"].size == (16, 16)
+
+
+def test_codeformer_runner_raises_when_single_face_restore_fails(tmp_path, monkeypatch):
+    weights = tmp_path / "codeformer.pth"
+    weights.write_bytes(b"weights")
+
+    class FakeTorch:
+        class cuda:
+            @staticmethod
+            def empty_cache():
+                return None
+
+        @staticmethod
+        def no_grad():
+            class _Ctx:
+                def __enter__(self):
+                    return None
+
+                def __exit__(self, exc_type, exc, tb):
+                    return False
+
+            return _Ctx()
+
+    class FakeTensor:
+        def unsqueeze(self, dim):
+            return self
+
+        def to(self, device):
+            return self
+
+    def fake_img2tensor(*args, **kwargs):
+        return FakeTensor()
+
+    def fake_tensor2img(*args, **kwargs):
+        return np.zeros((8, 8, 3), dtype=np.uint8)
+
+    monkeypatch.setitem(__import__("sys").modules, "basicsr.utils", type("M", (), {"img2tensor": fake_img2tensor, "tensor2img": fake_tensor2img})())
+    monkeypatch.setitem(
+        __import__("sys").modules,
+        "torchvision.transforms.functional",
+        type("M", (), {"normalize": lambda *args, **kwargs: None})(),
+    )
+
+    class TestableCodeFormerRunner(CodeFormerRunner):
+        def _build_network(self, torch):
+            class FailingNet:
+                def __call__(self, *args, **kwargs):
+                    raise ValueError("boom")
+
+            return FailingNet()
+
+    runner = TestableCodeFormerRunner(name="CodeFormer_x2", weights=str(weights), scale=2, device="cpu")
+
+    with pytest.raises(RuntimeError, match="CodeFormer failed to restore face 1/1: boom"):
+        runner._restore_faces([np.zeros((8, 8, 3), dtype=np.uint8)], torch=FakeTorch())
 
 
 def test_codeformer_runner_provenance_exposes_paste_back_and_alignment(tmp_path):
