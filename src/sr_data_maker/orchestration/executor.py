@@ -15,14 +15,12 @@ class PipelineExecutor:
         register_builtins()
 
         output_root = Path(config["paths"]["output_root"])
-        writer = DatasetWriter(output_root=output_root)
-        state = RunStateStore(output_root=output_root)
         source_reader = SOURCE_READERS.build(config["source"], root=config["paths"]["input_root"])
-        task_handlers = self._build_task_handlers(config["tasks"], config["runtime"])
+        task_handlers = self._build_task_handlers(config["tasks"], config["runtime"], output_root)
 
         summary = {"succeeded": 0, "skipped_tasks": 0, "failed": 0}
         for source in source_reader.iter_sources():
-            for task, generator in task_handlers:
+            for task, generator, writer, state in task_handlers:
                 if not task.get("enabled", True):
                     summary["skipped_tasks"] += 1
                     continue
@@ -46,15 +44,20 @@ class PipelineExecutor:
         writer.write_summary(summary)
         return summary
 
-    def _build_task_handlers(self, tasks: list[dict[str, Any]], runtime: dict[str, Any]) -> list[tuple[dict[str, Any], Any]]:
-        handlers: list[tuple[dict[str, Any], Any]] = []
+    def _build_task_handlers(
+        self, tasks: list[dict[str, Any]], runtime: dict[str, Any], output_root: Path
+    ) -> list[tuple[dict[str, Any], Any, DatasetWriter, RunStateStore]]:
+        handlers: list[tuple[dict[str, Any], Any, DatasetWriter, RunStateStore]] = []
         for task in tasks:
+            namespace = task["name"]
+            writer = DatasetWriter(output_root=output_root, manifest_namespace=namespace)
+            state = RunStateStore(output_root=output_root, manifest_namespace=namespace)
             if task.get("enabled", True):
                 runner = self._build_runner(task, runtime)
                 generator = self._build_generator(task, runner)
-                handlers.append((task, generator))
+                handlers.append((task, generator, writer, state))
                 continue
-            handlers.append((task, None))
+            handlers.append((task, None, writer, state))
         return handlers
 
     @staticmethod

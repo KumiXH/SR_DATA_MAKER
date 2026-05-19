@@ -80,9 +80,19 @@ def _validate(config_path: str) -> int:
 
 
 def _inspect(dataset_root: str) -> int:
-    summary = Path(dataset_root) / "manifests" / "run_summary.json"
+    manifests_root = Path(dataset_root) / "manifests"
+    summary = manifests_root / "run_summary.json"
     if summary.exists():
         print(json.dumps(json.loads(summary.read_text(encoding="utf-8")), indent=2))
+        return 0
+
+    task_summaries = sorted(manifests_root.glob("*/run_summary.json"))
+    if task_summaries:
+        payload = {
+            summary_path.parent.name: json.loads(summary_path.read_text(encoding="utf-8"))
+            for summary_path in task_summaries
+        }
+        print(json.dumps(payload, indent=2))
     return 0
 
 

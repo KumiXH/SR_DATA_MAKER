@@ -5,8 +5,11 @@ from pathlib import Path
 
 
 class RunStateStore:
-    def __init__(self, output_root: str | Path) -> None:
-        self.path = Path(output_root) / "manifests" / "state.jsonl"
+    def __init__(self, output_root: str | Path, manifest_namespace: str | None = None) -> None:
+        self.path = Path(output_root) / "manifests"
+        if manifest_namespace:
+            self.path = self.path / manifest_namespace
+        self.path = self.path / "state.jsonl"
         self._completed: set[str] = set()
         if self.path.exists():
             for line in self.path.read_text(encoding="utf-8").splitlines():

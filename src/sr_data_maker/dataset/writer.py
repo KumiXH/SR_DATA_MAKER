@@ -9,8 +9,11 @@ from sr_data_maker.dataset.manifest import append_jsonl, write_json
 
 
 class DatasetWriter:
-    def __init__(self, output_root: str | Path) -> None:
+    def __init__(self, output_root: str | Path, manifest_namespace: str | None = None) -> None:
         self.output_root = Path(output_root)
+        self.manifest_root = self.output_root / "manifests"
+        if manifest_namespace:
+            self.manifest_root = self.manifest_root / manifest_namespace
 
     def write_image(self, rel_output_path: str, image: Image.Image) -> Path:
         target = self.output_root / Path(rel_output_path)
@@ -19,10 +22,10 @@ class DatasetWriter:
         return target
 
     def append_sample(self, record: dict[str, Any]) -> None:
-        append_jsonl(self.output_root / "manifests" / "samples.jsonl", record)
+        append_jsonl(self.manifest_root / "samples.jsonl", record)
 
     def append_failure(self, record: dict[str, Any]) -> None:
-        append_jsonl(self.output_root / "manifests" / "failures.jsonl", record)
+        append_jsonl(self.manifest_root / "failures.jsonl", record)
 
     def write_summary(self, payload: dict[str, Any]) -> None:
-        write_json(self.output_root / "manifests" / "run_summary.json", payload)
+        write_json(self.manifest_root / "run_summary.json", payload)

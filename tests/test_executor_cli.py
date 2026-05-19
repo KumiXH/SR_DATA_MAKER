@@ -49,7 +49,7 @@ def test_executor_runs_degradation_and_skips_disabled_teacher(tmp_path):
     assert summary["succeeded"] == 1
     assert summary["skipped_tasks"] == 1
     assert (output_root / "degraded" / "degradation_x2" / "city" / "day" / "img001.png").exists()
-    samples = (output_root / "manifests" / "samples.jsonl").read_text(encoding="utf-8").splitlines()
+    samples = (output_root / "manifests" / "degradation_x2" / "samples.jsonl").read_text(encoding="utf-8").splitlines()
     assert json.loads(samples[0])["source"]["rel_path"] == "city/day/img001.png"
 
 
@@ -138,7 +138,7 @@ def test_executor_logs_single_image_failures_and_continues(tmp_path):
     assert (output_root / "teacher" / "Flaky_x1" / "faces" / "img002.png").exists()
     assert not (output_root / "teacher" / "Flaky_x1" / "faces" / "img001.png").exists()
 
-    failures = (output_root / "manifests" / "failures.jsonl").read_text(encoding="utf-8").splitlines()
+    failures = (output_root / "manifests" / "teacher_sr_flaky" / "failures.jsonl").read_text(encoding="utf-8").splitlines()
     assert len(failures) == 1
     failure = json.loads(failures[0])
     assert failure["task"] == "teacher_sr_flaky"
@@ -184,3 +184,53 @@ def test_executor_passes_runtime_device_to_pytorch_teacher_adapters(tmp_path):
     PipelineExecutor().run(config)
 
     assert DeviceCapturingRunner.captured_devices == ["cpu"]
+
+
+def test_executor_isolates_manifest_state_by_task_name(tmp_path):
+    class EchoRunner:
+        def __init__(self, **_: object) -> None:
+            pass
+
+        def run(self, inputs, context):
+            return RunnerOutput(outputs={"image": inputs["image"]}, meta={})
+
+    register_builtins()
+    RUNNERS.register("EchoRunner")(EchoRunner)
+
+    source_root = tmp_path / "raw"
+    nested = source_root / "shared"
+    nested.mkdir(parents=True)
+    Image.new("RGB", (8, 8), "white").save(nested / "img001.png")
+    output_root = tmp_path / "out"
+    config = {
+        "name": "manifest_isolation",
+        "runtime": {"device": "cpu", "resume": True, "seed": 1},
+        "paths": {"input_root": str(source_root), "output_root": str(output_root)},
+        "source": {"type": "ImageFolderSourceReader", "recursive": True, "exts": ["png"]},
+        "tasks": [
+            {
+                "name": "teacher_sr_model_a",
+                "enabled": True,
+                "type": "TeacherSRGenerator",
+                "runner": {"type": "EchoRunner"},
+                "model": {"name": "ModelA", "scale": 1},
+                "output": {"folder_name": "ModelA"},
+            },
+            {
+                "name": "teacher_sr_model_b",
+                "enabled": True,
+                "type": "TeacherSRGenerator",
+                "runner": {"type": "EchoRunner"},
+                "model": {"name": "ModelB", "scale": 1},
+                "output": {"folder_name": "ModelB"},
+            },
+        ],
+    }
+
+    summary = PipelineExecutor().run(config)
+
+    assert summary["succeeded"] == 2
+    assert (output_root / "manifests" / "teacher_sr_model_a" / "state.jsonl").exists()
+    assert (output_root / "manifests" / "teacher_sr_model_b" / "state.jsonl").exists()
+    assert (output_root / "manifests" / "teacher_sr_model_a" / "samples.jsonl").exists()
+    assert (output_root / "manifests" / "teacher_sr_model_b" / "samples.jsonl").exists()
