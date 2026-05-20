@@ -1,0 +1,33 @@
+name: down_quarter_up_restore_sr_hr_img5_resshift
+runtime:
+  device: cuda
+  resume: true
+  seed: 1234
+paths:
+  input_root: D:/repository/SR_DATA_MAKER/.worktrees/degradation-engineering/data/outputs/down_quarter_up_restore_sr_hr_img5/degraded/down_quarter_up_restore_sr_hr_img5
+  output_root: D:/repository/SR_DATA_MAKER/.worktrees/degradation-engineering/data/outputs/down_quarter_up_restore_sr_hr_img5/diffusion_teachers
+source:
+  type: ImageFolderSourceReader
+  recursive: true
+  exts: [jpg, jpeg, png, webp]
+tasks:
+  - name: teacher_sr_resshift
+    enabled: true
+    type: TeacherSRGenerator
+    runner:
+      type: ResShiftRunner
+    model:
+      name: ResShift_x4
+      weights: ./weights/resshift/resshift_realsrx4_s4_v3.pth
+      autoencoder_weights: ./weights/resshift/autoencoder_vq_f4.pth
+      repo_root: ./third_party/ResShift
+      scale: 4
+      steps: 4
+      version: v3
+      task: realsr
+      chop_size: 64
+      chop_stride: 32
+      precision: fp16
+    output:
+      folder_name: ResShift_x4
+      target_type: pseudo_gt

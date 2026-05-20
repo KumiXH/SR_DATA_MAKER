@@ -1,0 +1,42 @@
+name: down_quarter_up_restore_sr_hr_img5_supir
+runtime:
+  device: cuda
+  resume: true
+  seed: 1234
+paths:
+  input_root: D:/repository/SR_DATA_MAKER/.worktrees/degradation-engineering/data/outputs/down_quarter_up_restore_sr_hr_img5/degraded/down_quarter_up_restore_sr_hr_img5
+  output_root: D:/repository/SR_DATA_MAKER/.worktrees/degradation-engineering/data/outputs/down_quarter_up_restore_sr_hr_img5/diffusion_teachers
+source:
+  type: ImageFolderSourceReader
+  recursive: true
+  exts: [jpg, jpeg, png, webp]
+tasks:
+  - name: teacher_sr_supir
+    enabled: true
+    type: TeacherSRGenerator
+    runner:
+      type: SUPIRRunner
+    model:
+      name: SUPIR_x4
+      weights: ./weights/supir/SUPIR-v0Q.ckpt
+      repo_root: ./third_party/SUPIR
+      opt_path: ./third_party/SUPIR/options/SUPIR_v0.yaml
+      python_executable: ./.conda/stablesr-py310/python.exe
+      scale: 1
+      steps: 20
+      precision: fp16
+      supir_sign: Q
+      prompt: clean realistic photo
+      negative_prompt: oversmoothed, blurry
+      color_fix_type: Wavelet
+      no_llava: true
+      loading_half_params: true
+      use_tile_vae: true
+      encoder_tile_size: 192
+      decoder_tile_size: 32
+      min_size: 256
+      ae_dtype: bf16
+      diff_dtype: fp16
+    output:
+      folder_name: SUPIR_x4
+      target_type: pseudo_gt

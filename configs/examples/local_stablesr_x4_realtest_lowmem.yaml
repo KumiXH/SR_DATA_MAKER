@@ -1,0 +1,43 @@
+name: local_stablesr_x4_realtest_lowmem
+runtime:
+  device: cuda
+  resume: false
+  seed: 1234
+paths:
+  input_root: C:/Users/kumi/Desktop/SR_HR_IMG_5/LR
+  output_root: ./data/outputs/local_stablesr_x4_realtest_lowmem
+source:
+  type: ImageFolderSourceReader
+  recursive: true
+  exts: [jpg, jpeg, png, webp]
+tasks:
+  - name: teacher_sr_stablesr
+    enabled: true
+    type: TeacherSRGenerator
+    runner:
+      type: StableSRRunner
+    model:
+      name: StableSR_x4
+      weights: ./weights/stablesr/stablesr_turbo.ckpt
+      vqgan_weights: ./weights/stablesr/vqgan_cfw_00011.ckpt
+      python_executable: ./.conda/stablesr-py310/python.exe
+      repo_root: ./third_party/StableSR
+      extra_repo_roots:
+        - path: ./third_party/taming-transformers
+          repo_url: https://github.com/CompVis/taming-transformers.git
+        - path: ./third_party/CLIP
+          repo_url: https://github.com/openai/CLIP.git
+      scale: 4
+      steps: 4
+      precision: fp16
+      color_fix_type: wavelet
+      input_size: 512
+      tile_overlap: 32
+      vqgan_tile_size: 512
+      vqgan_tile_stride: 256
+      config_path: ./third_party/StableSR/configs/stableSRNew/v2-finetune_text_T_512.yaml
+      download_url: https://huggingface.co/Iceclear/StableSR/resolve/main/stablesr_turbo.ckpt
+      vqgan_download_url: https://huggingface.co/Iceclear/StableSR/resolve/main/vqgan_cfw_00011.ckpt
+    output:
+      folder_name: StableSR_x4
+      target_type: pseudo_gt

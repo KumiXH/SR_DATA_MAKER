@@ -5,6 +5,7 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 .venv/
+.conda/
 venv/
 dist/
 build/
@@ -12,3 +13,4 @@ build/
 data/
 weights/
 third_party/
+tmp/
