@@ -7,6 +7,12 @@ from pathlib import Path
 from sr_data_maker.config.loader import load_config
 from sr_data_maker.config.validator import validate_config
 from sr_data_maker.orchestration.executor import PipelineExecutor
+from sr_data_maker.setup.diffusion_teacher import (
+    print_diffusion_teacher_setup_summary,
+    setup_resshift_from_config,
+    setup_stablesr_from_config,
+    setup_supir_from_config,
+)
 from sr_data_maker.setup.face_teacher import (
     print_face_teacher_setup_summary,
     setup_codeformer_from_config,
@@ -46,6 +52,15 @@ def main() -> int:
     vqfr = setup_sub.add_parser("vqfr")
     vqfr.add_argument("--config", required=True)
     vqfr.add_argument("--project-root", default=".")
+    stablesr = setup_sub.add_parser("stablesr")
+    stablesr.add_argument("--config", required=True)
+    stablesr.add_argument("--project-root", default=".")
+    resshift = setup_sub.add_parser("resshift")
+    resshift.add_argument("--config", required=True)
+    resshift.add_argument("--project-root", default=".")
+    supir = setup_sub.add_parser("supir")
+    supir.add_argument("--config", required=True)
+    supir.add_argument("--project-root", default=".")
 
     args = parser.parse_args()
     if args.command == "run":
@@ -64,6 +79,12 @@ def main() -> int:
         return _setup_codeformer(args.config, args.project_root)
     if args.command == "setup" and args.setup_target == "vqfr":
         return _setup_vqfr(args.config, args.project_root)
+    if args.command == "setup" and args.setup_target == "stablesr":
+        return _setup_stablesr(args.config, args.project_root)
+    if args.command == "setup" and args.setup_target == "resshift":
+        return _setup_resshift(args.config, args.project_root)
+    if args.command == "setup" and args.setup_target == "supir":
+        return _setup_supir(args.config, args.project_root)
     return _inspect(args.dataset)
 
 
@@ -125,6 +146,27 @@ def _setup_vqfr(config_path: str, project_root: str) -> int:
     config = load_config(config_path)
     results = setup_vqfr_from_config(config, project_root=project_root)
     print_face_teacher_setup_summary("vqfr", results)
+    return 0
+
+
+def _setup_stablesr(config_path: str, project_root: str) -> int:
+    config = load_config(config_path)
+    results = setup_stablesr_from_config(config, project_root=project_root)
+    print_diffusion_teacher_setup_summary("stablesr", results)
+    return 0
+
+
+def _setup_resshift(config_path: str, project_root: str) -> int:
+    config = load_config(config_path)
+    results = setup_resshift_from_config(config, project_root=project_root)
+    print_diffusion_teacher_setup_summary("resshift", results)
+    return 0
+
+
+def _setup_supir(config_path: str, project_root: str) -> int:
+    config = load_config(config_path)
+    results = setup_supir_from_config(config, project_root=project_root)
+    print_diffusion_teacher_setup_summary("supir", results)
     return 0
 
 

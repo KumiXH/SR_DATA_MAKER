@@ -78,3 +78,37 @@ def test_teacher_generator_preserves_face_runner_provenance(tmp_path):
     assert sample.manifest["provenance"]["face_model"] is True
     assert sample.manifest["provenance"]["face_model_family"] == "CodeFormer"
     assert sample.manifest["provenance"]["fidelity_weight"] == 0.7
+
+
+def test_teacher_generator_preserves_diffusion_runner_provenance(tmp_path):
+    class DiffusionRunner:
+        name = "ResShiftRunner"
+
+        def run(self, inputs, context):
+            return RunnerOutput(
+                outputs={"image": Image.new("RGB", (2, 2), "black")},
+                meta={
+                    "diffusion_model": True,
+                    "diffusion_model_family": "ResShift",
+                    "steps": 15,
+                    "precision": "fp16",
+                },
+            )
+
+    source_path = tmp_path / "a" / "b.png"
+    source_path.parent.mkdir(parents=True)
+    Image.new("RGB", (2, 2), "white").save(source_path)
+    source = SourceRecord(source_id="a/b.png", path=source_path, rel_path="a/b.png", meta={})
+    generator = TeacherSRGenerator(
+        name="teacher_sr_resshift",
+        runner=DiffusionRunner(),
+        model={"name": "ResShift_x4"},
+        output={"folder_name": "ResShift_x4"},
+    )
+
+    sample = generator.generate(source, context=None)[0]
+
+    assert sample.manifest["provenance"]["diffusion_model"] is True
+    assert sample.manifest["provenance"]["diffusion_model_family"] == "ResShift"
+    assert sample.manifest["provenance"]["steps"] == 15
+    assert sample.manifest["provenance"]["precision"] == "fp16"

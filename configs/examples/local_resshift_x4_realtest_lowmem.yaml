@@ -1,0 +1,35 @@
+name: local_resshift_x4_realtest_lowmem
+runtime:
+  device: cuda
+  resume: false
+  seed: 1234
+paths:
+  input_root: C:/Users/kumi/Desktop/SR_HR_IMG_5/LR
+  output_root: ./data/outputs/local_resshift_x4_realtest_lowmem
+source:
+  type: ImageFolderSourceReader
+  recursive: true
+  exts: [jpg, jpeg, png, webp]
+tasks:
+  - name: teacher_sr_resshift
+    enabled: true
+    type: TeacherSRGenerator
+    runner:
+      type: ResShiftRunner
+    model:
+      name: ResShift_x4
+      weights: ./weights/resshift/resshift_realsrx4_s4_v3.pth
+      autoencoder_weights: ./weights/resshift/autoencoder_vq_f4.pth
+      repo_root: ./third_party/ResShift
+      scale: 4
+      steps: 4
+      version: v3
+      task: realsr
+      chop_size: 64
+      chop_stride: 32
+      precision: fp16
+      download_url: https://github.com/zsyOAOA/ResShift/releases/download/v2.0/resshift_realsrx4_s4_v3.pth
+      autoencoder_download_url: https://github.com/zsyOAOA/ResShift/releases/download/v2.0/autoencoder_vq_f4.pth
+    output:
+      folder_name: ResShift_x4
+      target_type: pseudo_gt

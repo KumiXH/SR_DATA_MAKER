@@ -1,0 +1,36 @@
+name: down_half_up_restore_sr_hr_img5_stablesr
+runtime:
+  device: cuda
+  resume: false
+  seed: 1234
+paths:
+  input_root: D:/repository/SR_DATA_MAKER/.worktrees/degradation-engineering/data/outputs/down_half_up_restore_sr_hr_img5/degraded/down_half_up_restore_sr_hr_img5
+  output_root: D:/repository/SR_DATA_MAKER/.worktrees/degradation-engineering/data/outputs/down_half_up_restore_sr_hr_img5/diffusion_teachers
+source:
+  type: ImageFolderSourceReader
+  recursive: true
+  exts: [jpg, jpeg, png, webp]
+tasks:
+  - name: teacher_sr_stablesr
+    enabled: true
+    type: TeacherSRGenerator
+    runner:
+      type: StableSRRunner
+    model:
+      name: StableSR_x4
+      weights: ./weights/stablesr/stablesr_turbo.ckpt
+      vqgan_weights: ./weights/stablesr/vqgan_cfw_00011.ckpt
+      python_executable: ./.conda/stablesr-py310/python.exe
+      repo_root: ./third_party/StableSR
+      scale: 4
+      steps: 4
+      precision: fp16
+      color_fix_type: wavelet
+      input_size: 512
+      tile_overlap: 32
+      vqgan_tile_size: 512
+      vqgan_tile_stride: 256
+      config_path: ./third_party/StableSR/configs/stableSRNew/v2-finetune_text_T_512.yaml
+    output:
+      folder_name: StableSR_x4
+      target_type: pseudo_gt

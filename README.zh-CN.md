@@ -25,6 +25,9 @@
 | GFPGAN v1.4 | `GFPGANRunner` | 人脸超分 / 修复 | x2 | 整图人脸修复并输出 x2 结果 | [TencentARC/GFPGAN](https://github.com/TencentARC/GFPGAN) | `configs/examples/local_gfpgan_x2.yaml` |
 | CodeFormer | `CodeFormerRunner` | 人脸超分 / 修复 | 配置为 x2 | 走官方整图人脸修复与 face upsample 路线，最终输出尺寸可能大于严格 x2 | [sczhou/CodeFormer](https://github.com/sczhou/CodeFormer) | `configs/examples/local_codeformer_x2.yaml` |
 | VQFR v2 | `VQFRRunner` | 人脸超分 / 修复 | x2 | 整图人脸修复并输出 x2 结果 | [TencentARC/VQFR](https://github.com/TencentARC/VQFR) | `configs/examples/local_vqfr_x2.yaml` |
+| StableSR | `StableSRRunner` | Diffusion 真实世界超分 | x4 配置 | 支持保守 tile 配置的整图 diffusion 超分 | [IceClear/StableSR](https://github.com/IceClear/StableSR) | `configs/examples/local_stablesr_x4.yaml` |
+| ResShift | `ResShiftRunner` | Diffusion 真实世界超分 | x4 配置 | 低步数 real-world SR 路线的整图 diffusion 超分 | [zsyOAOA/ResShift](https://github.com/zsyOAOA/ResShift) | `configs/examples/local_resshift_x4.yaml` |
+| SUPIR | `SUPIRRunner` | Diffusion 修复 / 超分 | x4 配置 | 作为 teacher 使用的整图 diffusion 修复与超分 | [Fanghua-Yu/SUPIR](https://github.com/Fanghua-Yu/SUPIR) | `configs/examples/local_supir_x4.yaml` |
 
 ## 数据集
 
@@ -43,6 +46,9 @@
 - `configs/examples/local_gfpgan_x2.yaml`
 - `configs/examples/local_codeformer_x2.yaml`
 - `configs/examples/local_vqfr_x2.yaml`
+- `configs/examples/local_stablesr_x4.yaml`
+- `configs/examples/local_resshift_x4.yaml`
+- `configs/examples/local_supir_x4.yaml`
 
 真实人脸数据集参考配置：
 
@@ -84,6 +90,20 @@ python -m sr_data_maker.cli.main setup gfpgan --config configs/examples/local_gf
 python -m sr_data_maker.cli.main setup codeformer --config configs/examples/local_codeformer_x2.yaml --project-root .
 python -m sr_data_maker.cli.main setup vqfr --config configs/examples/local_vqfr_x2.yaml --project-root .
 ```
+
+Diffusion 真实世界超分 teacher 也是同样的准备方式：
+
+```powershell
+python -m sr_data_maker.cli.main setup stablesr --config configs/examples/local_stablesr_x4.yaml --project-root .
+python -m sr_data_maker.cli.main setup resshift --config configs/examples/local_resshift_x4.yaml --project-root .
+python -m sr_data_maker.cli.main setup supir --config configs/examples/local_supir_x4.yaml --project-root .
+```
+
+权重准备说明：
+
+- `ResShift` 示例 YAML 直接使用官方 GitHub Release 权重和 autoencoder 权重。
+- `StableSR` 示例 YAML 直接使用官方 Hugging Face 的 `stablesr_turbo.ckpt` 和 `vqgan_cfw_00011.ckpt`。
+- `SUPIR` 官方发布更偏 Google Drive / 百度网盘目录分发，所以当前示例更适合“手动准备 checkpoint 后再跑”，不建议把它当成和前两者完全一样的自动下载流程。
 
 运行一个 teacher 流水线：
 

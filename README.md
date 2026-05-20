@@ -25,6 +25,9 @@ The table below summarizes the SR and face-teacher models currently integrated i
 | GFPGAN v1.4 | `GFPGANRunner` | Face SR / restoration | x2 | Whole-image face restoration with x2 output | [TencentARC/GFPGAN](https://github.com/TencentARC/GFPGAN) | `configs/examples/local_gfpgan_x2.yaml` |
 | CodeFormer | `CodeFormerRunner` | Face SR / restoration | x2 config | Whole-image face restoration plus face upsample; output size follows the official face-upsample path and may exceed strict x2 | [sczhou/CodeFormer](https://github.com/sczhou/CodeFormer) | `configs/examples/local_codeformer_x2.yaml` |
 | VQFR v2 | `VQFRRunner` | Face SR / restoration | x2 | Whole-image face restoration with x2 output | [TencentARC/VQFR](https://github.com/TencentARC/VQFR) | `configs/examples/local_vqfr_x2.yaml` |
+| StableSR | `StableSRRunner` | Diffusion real-world SR | x4 config | Whole-image diffusion SR with conservative tile-friendly config | [IceClear/StableSR](https://github.com/IceClear/StableSR) | `configs/examples/local_stablesr_x4.yaml` |
+| ResShift | `ResShiftRunner` | Diffusion real-world SR | x4 config | Whole-image diffusion SR with low-step real-world restoration flow | [zsyOAOA/ResShift](https://github.com/zsyOAOA/ResShift) | `configs/examples/local_resshift_x4.yaml` |
+| SUPIR | `SUPIRRunner` | Diffusion restoration / SR | x4 config | Whole-image diffusion restoration used as SR teacher with prompt controls | [Fanghua-Yu/SUPIR](https://github.com/Fanghua-Yu/SUPIR) | `configs/examples/local_supir_x4.yaml` |
 
 ## Datasets
 
@@ -43,6 +46,11 @@ Local example configs:
 - `configs/examples/local_gfpgan_x2.yaml`
 - `configs/examples/local_codeformer_x2.yaml`
 - `configs/examples/local_vqfr_x2.yaml`
+- `configs/examples/local_stablesr_x4.yaml`
+- `configs/examples/local_resshift_x4.yaml`
+- `configs/examples/local_resshift_x4_realtest.yaml`
+- `configs/examples/local_resshift_x4_realtest_lowmem.yaml`
+- `configs/examples/local_supir_x4.yaml`
 
 Real face-dataset reference configs:
 
@@ -83,6 +91,14 @@ Prepare the face-focused teacher models in the same style:
 python -m sr_data_maker.cli.main setup gfpgan --config configs/examples/local_gfpgan_x2.yaml --project-root .
 python -m sr_data_maker.cli.main setup codeformer --config configs/examples/local_codeformer_x2.yaml --project-root .
 python -m sr_data_maker.cli.main setup vqfr --config configs/examples/local_vqfr_x2.yaml --project-root .
+```
+
+Prepare the diffusion-based real-world SR teachers in the same style:
+
+```powershell
+python -m sr_data_maker.cli.main setup stablesr --config configs/examples/local_stablesr_x4.yaml --project-root .
+python -m sr_data_maker.cli.main setup resshift --config configs/examples/local_resshift_x4.yaml --project-root .
+python -m sr_data_maker.cli.main setup supir --config configs/examples/local_supir_x4.yaml --project-root .
 ```
 
 Run a teacher pipeline:
@@ -128,6 +144,25 @@ Supported default model downloads:
 - `facexlib` when configured
 - `BasicSR` when configured
 - `model.weights` by downloading `model.download_url`
+
+`setup stablesr`, `setup resshift`, and `setup supir` read enabled diffusion-teacher tasks from YAML and prepare:
+
+- the configured model repo root
+- the configured `model.weights`
+- any explicitly configured extra repo roots when added later
+
+The example diffusion YAMLs are intentionally conservative for first-pass local testing on a single GPU. For `5070 Ti`-class cards, start with `ResShift`, then try `StableSR` with tiling, and treat `SUPIR` as the heaviest option in this first batch.
+
+Real local validation note:
+
+- `configs/examples/local_resshift_x4_realtest_lowmem.yaml` was verified against `C:/Users/kumi/Desktop/SR_HR_IMG_5/LR` on a `5070 Ti`-class card with `chop_size: 64` and `chop_stride: 32`.
+- The matching output folder layout for side-by-side inspection is available under `data/outputs/local_resshift_x4_realtest_lowmem_compare/` with `input/` and `teacher/ResShift_x4/`.
+
+Weight preparation notes:
+
+- `ResShift` example YAML uses the official GitHub release weights and autoencoder checkpoint.
+- `StableSR` example YAML uses the official Hugging Face `stablesr_turbo.ckpt` and `vqgan_cfw_00011.ckpt`.
+- `SUPIR` currently ships best with manual checkpoint preparation because the official release is mainly distributed as Google Drive / Baidu folders rather than one stable direct file URL.
 
 All setup commands are designed to be idempotent. Existing repositories and weights are skipped. `third_party/` and `weights/` stay ignored by Git so external code and model files remain local.
 

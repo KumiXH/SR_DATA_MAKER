@@ -1,8 +1,10 @@
 import json
 
 from PIL import Image
+import yaml
 
 from sr_data_maker.core.types import RunnerOutput
+from sr_data_maker.cli.main import main
 from sr_data_maker.orchestration.executor import PipelineExecutor
 from sr_data_maker.plugins import RUNNERS, register_builtins
 
@@ -93,3 +95,114 @@ def test_executor_reuses_runner_for_same_task_across_sources(tmp_path):
 
     assert summary["succeeded"] == 2
     assert CountingRunner.init_count == 1
+
+
+def test_cli_setup_stablesr_uses_config(monkeypatch, tmp_path):
+    config_path = tmp_path / "config.yaml"
+    config_path.write_text(
+        yaml.safe_dump(
+            {
+                "tasks": [
+                    {
+                        "enabled": True,
+                        "runner": {"type": "StableSRRunner"},
+                        "model": {
+                            "name": "StableSR_x4",
+                            "weights": "./weights/stablesr.safetensors",
+                            "repo_root": "./third_party/StableSR",
+                            "download_url": "https://example.test/stablesr.safetensors",
+                        },
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    calls: list[tuple[dict, str]] = []
+
+    def fake_setup(config, project_root):
+        calls.append((config, project_root))
+        return [{"model_name": "StableSR_x4"}]
+
+    monkeypatch.setattr("sr_data_maker.cli.main.setup_stablesr_from_config", fake_setup)
+    monkeypatch.setattr(
+        "sys.argv",
+        ["sr-data-maker", "setup", "stablesr", "--config", str(config_path), "--project-root", str(tmp_path)],
+    )
+
+    assert main() == 0
+    assert calls[0][1] == str(tmp_path)
+
+
+def test_cli_setup_resshift_uses_config(monkeypatch, tmp_path):
+    config_path = tmp_path / "config.yaml"
+    config_path.write_text(
+        yaml.safe_dump(
+            {
+                "tasks": [
+                    {
+                        "enabled": True,
+                        "runner": {"type": "ResShiftRunner"},
+                        "model": {
+                            "name": "ResShift_x4",
+                            "weights": "./weights/resshift.safetensors",
+                            "repo_root": "./third_party/ResShift",
+                            "download_url": "https://example.test/resshift.safetensors",
+                        },
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    calls: list[tuple[dict, str]] = []
+
+    def fake_setup(config, project_root):
+        calls.append((config, project_root))
+        return [{"model_name": "ResShift_x4"}]
+
+    monkeypatch.setattr("sr_data_maker.cli.main.setup_resshift_from_config", fake_setup)
+    monkeypatch.setattr(
+        "sys.argv",
+        ["sr-data-maker", "setup", "resshift", "--config", str(config_path), "--project-root", str(tmp_path)],
+    )
+
+    assert main() == 0
+    assert calls[0][1] == str(tmp_path)
+
+
+def test_cli_setup_supir_uses_config(monkeypatch, tmp_path):
+    config_path = tmp_path / "config.yaml"
+    config_path.write_text(
+        yaml.safe_dump(
+            {
+                "tasks": [
+                    {
+                        "enabled": True,
+                        "runner": {"type": "SUPIRRunner"},
+                        "model": {
+                            "name": "SUPIR_x4",
+                            "weights": "./weights/supir.safetensors",
+                            "repo_root": "./third_party/SUPIR",
+                            "download_url": "https://example.test/supir.safetensors",
+                        },
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    calls: list[tuple[dict, str]] = []
+
+    def fake_setup(config, project_root):
+        calls.append((config, project_root))
+        return [{"model_name": "SUPIR_x4"}]
+
+    monkeypatch.setattr("sr_data_maker.cli.main.setup_supir_from_config", fake_setup)
+    monkeypatch.setattr(
+        "sys.argv",
+        ["sr-data-maker", "setup", "supir", "--config", str(config_path), "--project-root", str(tmp_path)],
+    )
+
+    assert main() == 0
+    assert calls[0][1] == str(tmp_path)

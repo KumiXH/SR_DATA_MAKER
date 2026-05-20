@@ -7,8 +7,11 @@ import pytest
 
 from sr_data_maker.plugins import RUNNERS, register_builtins
 from sr_data_maker.runners.teacher.codeformer import CodeFormerRunner
+from sr_data_maker.runners.teacher.resshift import ResShiftRunner
 from sr_data_maker.runners.teacher.gfpgan import GFPGANRunner
 from sr_data_maker.runners.teacher.hat import HATAdapter
+from sr_data_maker.runners.teacher.stablesr import StableSRRunner
+from sr_data_maker.runners.teacher.supir import SUPIRRunner
 from sr_data_maker.runners.teacher.swinir import SwinIRAdapter
 from sr_data_maker.runners.teacher.vqfr import VQFRRunner
 
@@ -175,6 +178,18 @@ def test_builtin_registry_includes_face_teacher_runners():
     assert isinstance(gfpgan, GFPGANRunner)
     assert isinstance(codeformer, CodeFormerRunner)
     assert isinstance(vqfr, VQFRRunner)
+
+
+def test_builtin_registry_includes_diffusion_teacher_runners():
+    register_builtins()
+
+    stablesr = RUNNERS.build({"type": "StableSRRunner", "name": "StableSR_x4", "weights": "missing.safetensors", "scale": 4})
+    resshift = RUNNERS.build({"type": "ResShiftRunner", "name": "ResShift_x4", "weights": "missing.safetensors", "scale": 4})
+    supir = RUNNERS.build({"type": "SUPIRRunner", "name": "SUPIR_x4", "weights": "missing.safetensors", "scale": 4})
+
+    assert isinstance(stablesr, StableSRRunner)
+    assert isinstance(resshift, ResShiftRunner)
+    assert isinstance(supir, SUPIRRunner)
 
 
 def test_adapter_adds_repo_and_dependency_roots_to_python_path(monkeypatch, tmp_path):
