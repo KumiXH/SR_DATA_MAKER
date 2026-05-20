@@ -60,13 +60,28 @@ class StableSRRunner(DiffusionTeacherRunnerBase):
     def _subprocess_env(self) -> dict[str, str]:
         repo_root = str(self._repo_root())
         extra_paths = [repo_root]
-        for candidate in ("src/taming-transformers", "src/clip"):
+        for extra_root in self._repo_roots()[1:]:
+            if extra_root.exists():
+                extra_paths.append(str(extra_root))
+        for candidate in (
+            "third_party/taming-transformers",
+            "third_party/CLIP",
+            "src/taming-transformers",
+            "src/clip",
+        ):
             path = (Path.cwd() / candidate).resolve()
-            if path.exists():
-                extra_paths.append(str(path))
+            path_str = str(path)
+            if path.exists() and path_str not in extra_paths:
+                extra_paths.append(path_str)
         pythonpath = os.pathsep.join(filter(None, [*extra_paths, os.environ.get("PYTHONPATH", "")]))
         hf_cache = self.model.get("hf_cache_dir") or str((Path.cwd() / "weights" / "supir" / "hf_cache").resolve())
-        openclip_root = self.model.get("openclip_root") or str((Path.home() / ".cache" / "huggingface" / "hub").resolve())
+        openclip_root = self.model.get("openclip_root")
+        if not openclip_root:
+            local_openclip_root = (Path.cwd() / "weights" / "hf_cache").resolve()
+            if local_openclip_root.exists():
+                openclip_root = str(local_openclip_root)
+            else:
+                openclip_root = str((Path.home() / ".cache" / "huggingface" / "hub").resolve())
         return {
             "PYTHONPATH": pythonpath,
             "KMP_DUPLICATE_LIB_OK": str(self.model.get("kmp_duplicate_lib_ok", "TRUE")),

@@ -201,6 +201,58 @@ def test_stablesr_runner_adds_local_dependency_sources_to_pythonpath(tmp_path, m
     assert str(clip_root) in env["PYTHONPATH"]
 
 
+def test_stablesr_runner_adds_declared_extra_repo_roots_to_pythonpath(tmp_path):
+    weights = tmp_path / "stablesr.safetensors"
+    vqgan = tmp_path / "vqgan.ckpt"
+    repo_root = tmp_path / "StableSR"
+    taming_root = tmp_path / "third_party" / "taming-transformers"
+    clip_root = tmp_path / "third_party" / "CLIP"
+    weights.write_bytes(b"weights")
+    vqgan.write_bytes(b"weights")
+    repo_root.mkdir()
+    taming_root.mkdir(parents=True)
+    clip_root.mkdir(parents=True)
+
+    runner = StableSRRunner(
+        name="StableSR_x4",
+        weights=str(weights),
+        repo_root=str(repo_root),
+        vqgan_weights=str(vqgan),
+        extra_repo_roots=[
+            {"path": str(taming_root), "repo_url": "https://github.com/CompVis/taming-transformers.git"},
+            {"path": str(clip_root), "repo_url": "https://github.com/openai/CLIP.git"},
+        ],
+    )
+
+    env = runner._subprocess_env()
+
+    assert str(taming_root) in env["PYTHONPATH"]
+    assert str(clip_root) in env["PYTHONPATH"]
+
+
+def test_stablesr_runner_prefers_local_openclip_cache_when_present(tmp_path, monkeypatch):
+    weights = tmp_path / "stablesr.safetensors"
+    vqgan = tmp_path / "vqgan.ckpt"
+    repo_root = tmp_path / "StableSR"
+    local_cache = tmp_path / "weights" / "hf_cache"
+    weights.write_bytes(b"weights")
+    vqgan.write_bytes(b"weights")
+    repo_root.mkdir()
+    local_cache.mkdir(parents=True)
+    monkeypatch.chdir(tmp_path)
+
+    runner = StableSRRunner(
+        name="StableSR_x4",
+        weights=str(weights),
+        repo_root=str(repo_root),
+        vqgan_weights=str(vqgan),
+    )
+
+    env = runner._subprocess_env()
+
+    assert env["SR_DATA_MAKER_OPENCLIP_ROOT"] == str(local_cache.resolve())
+
+
 def test_diffusion_runner_uses_model_python_executable(tmp_path):
     weights = tmp_path / "model.ckpt"
     repo_root = tmp_path / "StableSR"

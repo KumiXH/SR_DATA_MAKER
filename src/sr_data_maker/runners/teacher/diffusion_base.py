@@ -40,7 +40,10 @@ class DiffusionTeacherRunnerBase:
         extra_roots = self.model.get("extra_repo_roots") or []
         if isinstance(extra_roots, (str, Path)):
             extra_roots = [extra_roots]
-        roots.extend(self._resolve_model_path(root) for root in extra_roots)
+        for root in extra_roots:
+            if isinstance(root, dict):
+                root = root.get("path")
+            roots.append(self._resolve_model_path(root))
         return roots
 
     def _add_repo_to_path(self) -> None:
